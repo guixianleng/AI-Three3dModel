@@ -1,0 +1,12 @@
+{
+  "name": "@my-admin/components",
+  "version": "1.0.0",
+  "private": true,
+  "keywords": [],
+  "author": "LenGxin",
+  "license": "MIT",
+  "main": "index.ts",
+  "dependencies": {
+    "@my-admin/utils": "workspace:^"
+  }
+}

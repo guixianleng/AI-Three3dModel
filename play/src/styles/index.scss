@@ -1,0 +1,72 @@
+@use "element-plus/theme-chalk/el-message.css";
+@use "element-plus/theme-chalk/el-message-box.css";
+@use "element-plus/theme-chalk/dark/css-vars.css";
+
+// 自定义滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 4px;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    background: #a1a1aa;
+  }
+}
+
+// Firefox 滚动条样式
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+
+// 优化滚动行为
+html {
+  scroll-behavior: smooth;
+}
+
+// 隐藏特定元素的滚动条但保持可滚动
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+  
+  &::-webkit-scrollbar {     /* Chrome, Safari and Opera */
+    display: none;
+  }
+}
+
+// 自定义滚动条颜色变量
+:root {
+  --scrollbar-thumb: #d4d4d8;
+  --scrollbar-thumb-hover: #a1a1aa;
+  --scrollbar-track: transparent;
+}
+
+// 暗色模式下的滚动条
+@media (prefers-color-scheme: dark) {
+  :root {
+    --scrollbar-thumb: #3f3f46;
+    --scrollbar-thumb-hover: #52525b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+
+    &:hover {
+      background: var(--scrollbar-thumb-hover);
+    }
+  }
+
+  * {
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
+} 

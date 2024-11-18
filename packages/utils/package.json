@@ -1,0 +1,9 @@
+{
+  "name": "@my-admin/utils",
+  "private": true,
+  "version": "1.0.0",
+  "author": "LenGxin",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.ts"
+}

@@ -1,0 +1,18 @@
+my-admin/
+├── packages/
+│   ├── components/         # 组件库
+│   │   ├── src/
+│   │   │   ├── button/    # 按钮组件
+│   │   │   ├── input/     # 输入框组件
+│   │   │   └── index.ts   # 组件入口
+│   │   ├── package.json
+│   │   ├── vite.config.ts
+│   │   └── tsconfig.json
+│   └── shared/            # 共享库
+│       ├── src/
+│       ├── package.json
+│       └── tsconfig.json
+├── play/                  # 演示项目
+├── pnpm-workspace.yaml
+├── package.json
+└── tsconfig.json 

@@ -1,0 +1,22 @@
+{
+  "name": "my-admin-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -F @my-admin/play dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.1.0",
+    "element-plus": "^2.4.0",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/three": "^0.170.0",
+    "sass-embedded": "^1.81.0",
+    "typescript": "^5.0.0",
+    "vue-tsc": "^1.8.0"
+  }
+}
