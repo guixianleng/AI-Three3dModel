@@ -12,6 +12,9 @@ export default defineConfig(({ command }) => {
         '@': resolve(__dirname, './src')
       }
     },
+    server: {
+      port: 9527
+    },
     optimizeDeps: {
       include: [
         'vue',

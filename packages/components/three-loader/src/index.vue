@@ -2,12 +2,6 @@
   <div class="three-container">
     <LoadingSpinner 
       v-if="loading"
-      :texts="[
-        '正在加载模型...',
-        '初始化场景...',
-        '准备渲染...',
-        '马上就好...'
-      ]"
       :progress="loadingProgress"
       :auto-change-text="true"
       :text-change-interval="2000"
@@ -26,6 +20,9 @@
         @toggle-grid="handleToggleGrid"
         @toggle-stats="handleToggleStats"
         @scale-change="handleScaleChange"
+        @light-change="handleLightChange"
+        @shadow-change="handleShadowChange"
+        @light-angle-change="handleLightAngleChange"
       />
     </div>
   </div>
@@ -38,9 +35,11 @@ import * as THREE from 'three'
 import { useThreeScene } from './hooks/useThreeScene'
 import { useFBXModel } from './hooks/useFBXModel'
 import { useModelAnimation } from './hooks/useModelAnimation'
+import { useThreeLights } from './hooks/useThreeLights'
 
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
+import type { IModelControls } from './types'
 
 const {
   threeContainer,
@@ -51,8 +50,8 @@ const {
   toggleGrid,
   toggleStats
 } = useThreeScene({
-  showGrid: true,  // 默认显示网格
-  showStats: true, // 默认显示性能监控
+  showGrid: true,
+  showStats: true,
   backgroundColor: 0xf0f2f5
 })
 
@@ -63,28 +62,75 @@ const {
 } = useFBXModel()
 
 const {
-  modelControls,
   startAnimation,
   pauseAnimation,
   resetAnimation,
   updateAnimation
 } = useModelAnimation()
 
-// 加载模型并初始化动画
-let mixer: THREE.AnimationMixer
-let animations: THREE.AnimationAction[] = []
+const { lights, updateLightIntensity, updateShadowEnabled, addLightsToScene, updateLightAngle } = useThreeLights()
+
+// 初始化模型控制状态
+const modelControls = ref<IModelControls>({
+  scale: 1,
+  isPlaying: false,
+  wireframe: false,
+  lights: {
+    ambientIntensity: 0.5,
+    mainLightIntensity: 1.0,
+    fillLightIntensity: 0.3,
+    hemiLightIntensity: 0.2,
+    shadowEnabled: true,
+    mainLightAngle: {
+      x: 45,
+      y: 45,
+      z: 0
+    },
+    fillLightAngle: {
+      x: 45,
+      y: -45,
+      z: 0
+    }
+  }
+})
 
 // 保存模型引用
 const modelRef = ref<THREE.Group | null>(null)
+let mixer: THREE.AnimationMixer
+let animations: THREE.AnimationAction[] = []
 
-// 修改缩放处理函数，只缩放模型
+// 修改缩放处理函数
 const handleScaleChange = (scale: number) => {
   if (modelRef.value) {
     modelRef.value.scale.setScalar(scale)
   }
 }
 
-// 修改初始化模型函数，保存模型引用
+// 处理光源强度变化
+const handleLightChange = (lightType: string, intensity: number) => {
+  console.log('光源变化:', lightType, intensity)
+  switch(lightType) {
+    case 'ambientLight':
+      updateLightIntensity('ambientLight', intensity)
+      break
+    case 'mainLight':
+      updateLightIntensity('mainLight', intensity)
+      break
+    case 'fillLight':
+      updateLightIntensity('fillLight', intensity)
+      break
+    case 'hemiLight':
+      updateLightIntensity('hemiLight', intensity)
+      break
+  }
+}
+
+// 处理阴影开关
+const handleShadowChange = (enabled: boolean) => {
+  updateShadowEnabled(enabled)
+}
+
+// 修改初始化模型函数
 const initModel = async () => {
   try {
     console.log('开始初始化场景...')
@@ -93,12 +139,24 @@ const initModel = async () => {
     await new Promise(resolve => requestAnimationFrame(resolve))
     
     if (scene.value) {
+      // 确保光源已经添加到场景中
+      if (!lights.value) {
+        addLightsToScene(scene.value)
+      }
+
+      // 初始化光源强度
+      Object.entries(modelControls.value.lights).forEach(([key, value]) => {
+        if (key !== 'shadowEnabled') {
+          handleLightChange(key, value as number)
+        }
+      })
+
       console.log('场景初始化成功，开始加载模型...')
       const modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
       const result = await loadModel(modelUrl, scene.value)
-      console.log('模型加载成功:')
+      console.log('模型加载成功')
       
-      modelRef.value = result.model // 保存模型引用
+      modelRef.value = result.model
       mixer = result.mixer
       animations = result.animations
 
@@ -118,41 +176,38 @@ const initModel = async () => {
   }
 }
 
-onMounted(() => {
-  // 等待 DOM 更新完成后再初始化
-  nextTick(() => {
-    initModel()
-  })
-})
-
 // 截图功能
 const takeScreenshot = () => {
+  if (!renderer) return
   const link = document.createElement('a')
   link.download = 'screenshot.png'
   link.href = renderer.domElement.toDataURL('image/png')
   link.click()
 }
 
-// 修改动画控制方法，传入 mixer 和 animations
+// 动画控制方法
 const handleStartAnimation = () => {
   if (mixer && animations.length) {
     startAnimation(mixer, animations)
+    modelControls.value.isPlaying = true
   }
 }
 
 const handlePauseAnimation = () => {
   if (mixer) {
     pauseAnimation(mixer)
+    modelControls.value.isPlaying = false
   }
 }
 
 const handleResetAnimation = () => {
   if (mixer) {
     resetAnimation(mixer)
+    modelControls.value.isPlaying = false
   }
 }
 
-// 添加网格和性能监控的控制方法
+// 网格和性能监控的控制方法
 const handleToggleGrid = (show: boolean) => {
   toggleGrid(show)
 }
@@ -160,6 +215,20 @@ const handleToggleGrid = (show: boolean) => {
 const handleToggleStats = (show: boolean) => {
   toggleStats(show)
 }
+
+// 添加光源角度变化处理函数
+const handleLightAngleChange = (
+  lightType: string,
+  angle: { x: number; y: number; z: number }
+) => {
+  updateLightAngle(lightType as 'mainLight' | 'fillLight', angle)
+}
+
+onMounted(() => {
+  nextTick(() => {
+    initModel()
+  })
+})
 </script>
 
 <style lang="scss" scoped>
