@@ -1,90 +1,115 @@
 import { reactive } from 'vue'
 import * as THREE from 'three'
-import type { IModelControls } from '../types'
+import type { IModelControls } from '../types/controls'
+import { defaultLightConfig } from '../config/lightConfig'
 
 /**
  * 3D模型动画控制 Hook
- * @returns {Object} 动画控制相关的状态和方法
  */
 export function useModelAnimation() {
   // 模型控制状态
   const modelControls: IModelControls = reactive({
     scale: 1,
     isPlaying: false,
-    wireframe: false
+    wireframe: false,
+    lights: defaultLightConfig
   })
 
-  // 当前动画动作
+  // 动画相关变量
   let currentAction: THREE.AnimationAction | null = null
-  // 上次暂停时的时间点
+  const clock = new THREE.Clock()
   let lastTime = 0
-  // 动画时钟
-  let clock = new THREE.Clock()
 
   /**
    * 开始/继续播放动画
-   * @param mixer - Three.js 动画混合器
-   * @param animations - 动画动作数组
    */
   const startAnimation = (mixer: THREE.AnimationMixer, animations: THREE.AnimationAction[]) => {
-    if (!mixer || !animations.length) return
-    
-    modelControls.isPlaying = true
-    if (!currentAction) {
-      // 首次播放
-      currentAction = animations[0]
-      clock.start()
-      currentAction.play()
-    } else {
-      // 从暂停点继续播放
-      clock.start()
-      console.log('继续动画的帧数', lastTime)
-      currentAction.paused = false
-      currentAction.time = lastTime
-      mixer.setTime(lastTime)
-      currentAction.play()
+    if (!mixer || !animations.length) {
+      console.warn('动画播放失败: 未找到可用的动画')
+      return
+    }
+
+    try {
+      modelControls.isPlaying = true
+      if (!currentAction) {
+        // 首次播放
+        currentAction = animations[0]
+        clock.start()
+        currentAction.play()
+        console.log('开始播放动画')
+      } else {
+        // 继续播放
+        currentAction.paused = false
+        currentAction.time = lastTime
+        mixer.setTime(lastTime)
+        currentAction.play()
+        clock.start()
+        console.log('继续播放动画, 时间点:', lastTime)
+      }
+    } catch (error) {
+      console.error('播放动画失败:', error)
+      modelControls.isPlaying = false
     }
   }
 
   /**
    * 暂停动画
-   * @param mixer - Three.js 动画混合器
    */
   const pauseAnimation = (mixer: THREE.AnimationMixer) => {
-    if (!currentAction || !mixer) return
-    
-    modelControls.isPlaying = false
-    lastTime = mixer.time  // 记录当前时间点
-    currentAction.paused = true
-    console.log('暂定的帧数：', lastTime)
-    clock.stop()
+    if (!currentAction || !mixer) {
+      console.warn('暂停动画失败: 当前没有正在播放的动画')
+      return
+    }
+
+    try {
+      lastTime = mixer.time
+      currentAction.paused = true
+      clock.stop()
+      modelControls.isPlaying = false
+      console.log('动画已暂停, 时间点:', lastTime)
+    } catch (error) {
+      console.error('暂停动画失败:', error)
+    }
   }
 
   /**
-   * 重置动画到初始状态
-   * @param mixer - Three.js 动画混合器
+   * 重置动画
    */
   const resetAnimation = (mixer: THREE.AnimationMixer) => {
-    if (!currentAction || !mixer) return
-    
-    modelControls.isPlaying = false
-    lastTime = 0
-    clock.stop()
-    currentAction.stop()
-    currentAction.reset()
-    mixer.setTime(0)
-    currentAction = null
+    if (!currentAction || !mixer) {
+      console.warn('重置动画失败: 没有可重置的动画')
+      return
+    }
+
+    try {
+      // 停止并重置动画
+      currentAction.stop()
+      currentAction.reset()
+      mixer.setTime(0)
+      
+      // 重置状态
+      currentAction = null
+      lastTime = 0
+      clock.stop()
+      modelControls.isPlaying = false
+      
+      console.log('动画已重置')
+    } catch (error) {
+      console.error('重置动画失败:', error)
+    }
   }
 
   /**
    * 更新动画
-   * @param mixer - Three.js 动画混合器
-   * @description 在动画循环中调用此函数以更新动画状态
    */
   const updateAnimation = (mixer: THREE.AnimationMixer) => {
     if (mixer && modelControls.isPlaying) {
-      const delta = clock.getDelta()
-      mixer.update(delta)
+      try {
+        mixer.update(clock.getDelta())
+      } catch (error) {
+        console.error('更新动画失败:', error)
+        pauseAnimation(mixer)
+      }
     }
   }
 

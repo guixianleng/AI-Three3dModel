@@ -2,12 +2,6 @@
   <div class="three-container">
     <LoadingSpinner 
       v-if="loading"
-      :texts="[
-        '正在加载模型...',
-        '初始化场景...',
-        '准备渲染...',
-        '马上就好...'
-      ]"
       :progress="loadingProgress"
       :auto-change-text="true"
       :text-change-interval="2000"
@@ -18,13 +12,16 @@
     <div class="control-panel" v-show="!loading">
       <ModelControls 
         :model-controls="modelControls"
-        @reset-camera="resetCamera"
+        @reset-view="resetView"
         @take-screenshot="takeScreenshot"
         @start-animation="handleStartAnimation"
         @pause-animation="handlePauseAnimation"
         @reset-animation="handleResetAnimation"
         @toggle-grid="handleToggleGrid"
-        @toggle-stats="handleToggleStats"  
+        @toggle-stats="handleToggleStats"
+        @toggle-axes="handleToggleAxes"
+        @toggle-floor="handleToggleFloor"
+        @update-floor-color="handleUpdateFloorColor"
         @scale-change="handleScaleChange"
         @light-change="handleLightChange"
       />
@@ -49,11 +46,15 @@ import { defaultLightConfig } from './config/lightConfig'
 const {
   threeContainer,
   scene,
-  resetCamera,
+  resetView,
   renderer,
   initScene,
   toggleGrid,
-  toggleStats
+  toggleStats,
+  toggleAxes,
+  toggleFloor,
+  updateFloorColor,
+  updateLight
 } = useThreeScene({
   showGrid: true,
   showStats: true,
@@ -76,7 +77,7 @@ const {
 
 // 初始化模型控制状态
 const modelControls = ref<IModelControls>({
-  scale: 1,
+  scale: 0.5,
   isPlaying: false,
   wireframe: false,
   lights: defaultLightConfig
@@ -159,6 +160,15 @@ const handleToggleStats = (show: boolean) => {
   toggleStats(show)
 }
 
+const handleToggleAxes = (show: boolean) => {
+  toggleAxes(show)
+}
+
+// 添加地板显示/隐藏处理函数
+const handleToggleFloor = (show: boolean) => {
+  toggleFloor(show)
+}
+
 // 修改缩放处理函数
 const handleScaleChange = (scale: number) => {
   if (modelRef.value) {
@@ -188,6 +198,11 @@ const handleLightChange = (lightType: string, property: string, value: any) => {
         break
     }
   }
+}
+
+// 添加地板颜色更新处理函数
+const handleUpdateFloorColor = (color: string) => {
+  updateFloorColor(color)
 }
 
 onMounted(() => {

@@ -1,9 +1,9 @@
-import type { IModelControls } from '../types'
+import type { SceneLightsConfig } from '../types/lights'
 
 /**
  * 默认光源配置
  */
-export const defaultLightConfig: IModelControls['lights'] = {
+export const defaultLightConfig: SceneLightsConfig = {
   // 环境光配置
   ambient: {
     enabled: true,
@@ -38,13 +38,13 @@ export const defaultLightConfig: IModelControls['lights'] = {
   // 点光源配置 - 默认禁用且位置在原点
   point: {
     enabled: false,
-    intensity: 2,
-    color: '#ff9900',
+    intensity: 1,
+    color: '#ffffff',
     position: { x: 0, y: 0, z: 0 },
     distance: 400,
     decay: 1,
     shadow: {
-      enabled: true,
+      enabled: false,
       mapSize: 1024,
       bias: -0.001,
       radius: 4,

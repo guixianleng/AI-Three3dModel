@@ -1,6 +1,12 @@
 import * as THREE from 'three'
 import { ref } from 'vue'
-import type { AmbientLightConfig, DirectionalLightConfig, PointLightConfig, SpotLightConfig } from '../types'
+import type { 
+  AmbientLightConfig, 
+  DirectionalLightConfig, 
+  PointLightConfig, 
+  SpotLightConfig,
+  SceneLightsConfig 
+} from '../types/lights'
 
 /**
  * 场景光源集合接口
@@ -21,31 +27,28 @@ export interface SceneLights {
  */
 export function useThreeLights() {
   const lights = ref<SceneLights | null>(null)
-  // 存储辅助线对象
   const helpers = ref<{ [key: string]: THREE.Object3D | null }>({
     directional: null,
     point: null
   })
-  // 存储当前场景引用
   let currentScene: THREE.Scene | null = null
 
   /**
    * 创建环境光
    */
   const createAmbientLight = (config: AmbientLightConfig) => {
-    if (config.groundColor !== undefined) {
-      // 如果设置了地面反射颜色，创建半球光
-      return new THREE.HemisphereLight(
-        config.color,
-        config.groundColor,
-        config.intensity
-      )
-    } else {
-      // 否则创建普通环境光
-      return new THREE.AmbientLight(
-        config.color,
-        config.intensity
-      )
+    try {
+      if (config.groundColor !== undefined) {
+        return new THREE.HemisphereLight(
+          config.color,
+          config.groundColor,
+          config.intensity
+        )
+      }
+      return new THREE.AmbientLight(config.color, config.intensity)
+    } catch (error) {
+      console.error('创建环境光失败:', error)
+      return new THREE.AmbientLight()
     }
   }
 
@@ -53,108 +56,83 @@ export function useThreeLights() {
    * 创建平行光
    */
   const createDirectionalLight = (config: DirectionalLightConfig) => {
-    const light = new THREE.DirectionalLight(config.color, config.intensity)
-    
-    // 设置位置
-    light.position.set(
-      config.position.x,
-      config.position.y,
-      config.position.z
-    )
+    try {
+      const light = new THREE.DirectionalLight(config.color, config.intensity)
+      light.position.set(config.position.x, config.position.y, config.position.z)
 
-    // 增强阴影配置
-    if (config.shadow.enabled) {
-      light.castShadow = true
-      light.shadow.mapSize.width = config.shadow.mapSize
-      light.shadow.mapSize.height = config.shadow.mapSize
-      
-      // 调整阴影相机参数
-      light.shadow.camera.near = 0.5
-      light.shadow.camera.far = 500
-      light.shadow.camera.left = -100
-      light.shadow.camera.right = 100
-      light.shadow.camera.top = 100
-      light.shadow.camera.bottom = -100
-      
-      // 优化阴影质量
-      light.shadow.bias = -0.001
-      light.shadow.normalBias = 0.1
-      light.shadow.radius = 4
-      light.shadow.blurSamples = 8
+      if (config.shadow.enabled) {
+        light.castShadow = true
+        light.shadow.mapSize.width = config.shadow.mapSize
+        light.shadow.mapSize.height = config.shadow.mapSize
+        light.shadow.camera.near = 0.5
+        light.shadow.camera.far = 500
+        light.shadow.camera.left = -100
+        light.shadow.camera.right = 100
+        light.shadow.camera.top = 100
+        light.shadow.camera.bottom = -100
+        light.shadow.bias = -0.001
+        light.shadow.normalBias = 0.1
+      }
+
+      return light
+    } catch (error) {
+      console.error('创建平行光失败:', error)
+      return new THREE.DirectionalLight()
     }
-
-    return light
   }
 
   /**
    * 创建点光源
    */
   const createPointLight = (config: PointLightConfig) => {
-    const light = new THREE.PointLight(
-      config.color,
-      config.intensity * 3,     // 增强基础强度
-      config.distance * 2,      // 增加照射距离
-      1                         // 设置衰减为1，减少距离衰减
-    )
-
-    // 设置位置
-    light.position.set(
-      config.position.x,
-      config.position.y,
-      config.position.z
-    )
-
-    // 增强点光源效果
-    light.intensity = config.intensity * 3  // 增强光照强度
-    light.decay = 1                         // 减小衰减
-    light.distance = config.distance * 2    // 增加照射距离
-    light.power = 800                       // 增加光源功率
-
-    return light
+    try {
+      const light = new THREE.PointLight(
+        config.color,
+        config.intensity * 3,
+        config.distance * 2,
+        1
+      )
+      light.position.set(config.position.x, config.position.y, config.position.z)
+      light.power = 800
+      return light
+    } catch (error) {
+      console.error('创建点光源失败:', error)
+      return new THREE.PointLight()
+    }
   }
 
   /**
    * 创建聚光灯
    */
   const createSpotLight = (config: SpotLightConfig) => {
-    const light = new THREE.SpotLight(
-      config.color,
-      config.intensity,
-      config.distance,
-      config.angle,
-      config.penumbra,
-      config.decay
-    )
+    try {
+      const light = new THREE.SpotLight(
+        config.color,
+        config.intensity,
+        config.distance,
+        config.angle,
+        config.penumbra,
+        config.decay
+      )
+      light.position.set(config.position.x, config.position.y, config.position.z)
+      
+      const target = new THREE.Object3D()
+      target.position.set(config.target.x, config.target.y, config.target.z)
+      light.target = target
 
-    // 设置位置
-    light.position.set(
-      config.position.x,
-      config.position.y,
-      config.position.z
-    )
+      if (config.shadow.enabled) {
+        light.castShadow = true
+        light.shadow.mapSize.width = config.shadow.mapSize
+        light.shadow.mapSize.height = config.shadow.mapSize
+        light.shadow.camera.near = config.shadow.camera.near
+        light.shadow.camera.far = config.shadow.camera.far
+      }
 
-    // 设置目标点
-    const target = new THREE.Object3D()
-    target.position.set(
-      config.target.x,
-      config.target.y,
-      config.target.z
-    )
-    light.target = target
-
-    // 配置阴影
-    if (config.shadow.enabled) {
-      light.castShadow = true
-      light.shadow.mapSize.width = config.shadow.mapSize
-      light.shadow.mapSize.height = config.shadow.mapSize
-      light.shadow.bias = config.shadow.bias
-      light.shadow.radius = config.shadow.radius
-      light.shadow.blurSamples = config.shadow.blurSamples
-      light.shadow.camera.near = config.shadow.camera.near
-      light.shadow.camera.far = config.shadow.camera.far
+      return light
+    } catch (error) {
+      console.error('创建聚光灯失败:', error)
+      return new THREE.SpotLight()
     }
-
-    return light
   }
 
   /**

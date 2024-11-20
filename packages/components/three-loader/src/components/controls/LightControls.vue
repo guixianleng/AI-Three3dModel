@@ -224,11 +224,11 @@
 <script setup lang="ts">
 import { ref, inject, onMounted } from 'vue'
 import { Sunny } from '@element-plus/icons-vue'
-import type { IModelControls } from '../../types'
+import type { SceneLightsConfig } from '../../types/lights'
 import { LIGHTS_KEY } from '../../hooks/useThreeScene'
 
 const props = defineProps<{
-  lights: IModelControls['lights']
+  lights: SceneLightsConfig
 }>()
 
 const emit = defineEmits<{
@@ -310,7 +310,7 @@ const updatePointLightPosition = () => {
     })
   }
 
-  console.log('更新点光源位��:', { x, y, z, distance: pointDistance.value })
+  console.log('更新点光源位置:', { x, y, z, distance: pointDistance.value })
 }
 
 // 初始化时设置初始位置
@@ -400,7 +400,7 @@ const handleLightChange = (lightType: string, property: string, value: any) => {
       gap: 10px;
       margin-bottom: 10px;
       font-weight: bold;
-      font-size: 16px;
+      font-size: 15px;
       color: var(--el-text-color-primary);
 
       .switch-inline {
