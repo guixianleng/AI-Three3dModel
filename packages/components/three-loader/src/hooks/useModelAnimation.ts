@@ -2,6 +2,7 @@ import { reactive } from 'vue'
 import * as THREE from 'three'
 import type { IModelControls } from '../types/controls'
 import { defaultLightConfig } from '../config/lightConfig'
+import { defaultHelperConfig } from '../config/helperConfig'
 
 /**
  * 3D模型动画控制 Hook
@@ -12,7 +13,8 @@ export function useModelAnimation() {
     scale: 1,
     isPlaying: false,
     wireframe: false,
-    lights: defaultLightConfig
+    lights: defaultLightConfig,
+    helperConfig: defaultHelperConfig
   })
 
   // 动画相关变量

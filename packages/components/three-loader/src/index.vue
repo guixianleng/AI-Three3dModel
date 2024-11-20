@@ -24,13 +24,14 @@
         @update-floor-color="handleUpdateFloorColor"
         @scale-change="handleScaleChange"
         @light-change="handleLightChange"
+        @update-background-color="handleUpdateBackgroundColor"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import * as THREE from 'three'
 
 import { useThreeScene } from './hooks/useThreeScene'
@@ -42,6 +43,8 @@ import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
 import type { IModelControls } from './types'
 import { defaultLightConfig } from './config/lightConfig'
+import { defaultHelperConfig } from './config/helperConfig'
+import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
 
 const {
   threeContainer,
@@ -54,7 +57,8 @@ const {
   toggleAxes,
   toggleFloor,
   updateFloorColor,
-  updateLight
+  updateLight,
+  setBackgroundColor
 } = useThreeScene({
   showGrid: true,
   showStats: true,
@@ -80,7 +84,8 @@ const modelControls = ref<IModelControls>({
   scale: 0.5,
   isPlaying: false,
   wireframe: false,
-  lights: defaultLightConfig
+  lights: defaultLightConfig,
+  helperConfig: defaultHelperConfig
 })
 
 // 保存模型引用
@@ -178,25 +183,23 @@ const handleScaleChange = (scale: number) => {
 
 // 修改光源处理函数
 const handleLightChange = (lightType: string, property: string, value: any) => {
-  // 更新控制状态
-  if (lightType in modelControls.value.lights) {
-    const light = modelControls.value.lights[lightType]
-    switch (property) {
-      case 'enabled':
-        light.enabled = value
-        break
-      case 'intensity':
-        light.intensity = value
-        break
-      case 'color':
-        light.color = value
-        break
-      case 'position':
-        if ('position' in light) {
-          light.position = value
-        }
-        break
+  try {
+    // 更新控制状态
+    if (lightType in modelControls.value.lights) {
+      const light = modelControls.value.lights[lightType]
+      if (property.includes('.')) {
+        const [prop, subProp] = property.split('.')
+        light[prop][subProp] = value
+      } else {
+        light[property] = value
+      }
+
+      // 更新场景中的光源
+      updateLight(lightType, light)
+      console.log(`光源 ${lightType} 已更新:`, { property, value })
     }
+  } catch (error) {
+    console.error('更新光源失败:', error)
   }
 }
 
@@ -204,6 +207,28 @@ const handleLightChange = (lightType: string, property: string, value: any) => {
 const handleUpdateFloorColor = (color: string) => {
   updateFloorColor(color)
 }
+
+// 添加背景颜色更新处理函数
+const handleUpdateBackgroundColor = (color: string) => {
+  setBackgroundColor(color)
+}
+
+// 提供场景事件
+provide<SceneEvents>(SCENE_EVENTS_KEY, {
+  resetView,
+  takeScreenshot,
+  startAnimation: handleStartAnimation,
+  pauseAnimation: handlePauseAnimation,
+  resetAnimation: handleResetAnimation,
+  toggleGrid: handleToggleGrid,
+  toggleStats: handleToggleStats,
+  toggleAxes: handleToggleAxes,
+  toggleFloor: handleToggleFloor,
+  updateFloorColor: handleUpdateFloorColor,
+  updateBackgroundColor: handleUpdateBackgroundColor,
+  scaleChange: handleScaleChange,
+  lightChange: handleLightChange
+})
 
 onMounted(() => {
   initModel()

@@ -31,23 +31,25 @@
           <el-button-group>
             <el-button
               :type="isPlaying ? 'primary' : ''"
-              @click="$emit('start-animation')"
+              @click="sceneEvents?.startAnimation()"
               :disabled="isPlaying"
+              title="播放动画"
             >
               <el-icon><VideoPlay /></el-icon>
-              播放
             </el-button>
             <el-button
               :type="!isPlaying ? 'primary' : ''"
-              @click="$emit('pause-animation')"
+              @click="sceneEvents?.pauseAnimation()"
               :disabled="!isPlaying"
+              title="暂停动画"
             >
               <el-icon><VideoPause /></el-icon>
-              暂停
             </el-button>
-            <el-button @click="$emit('reset-animation')">
+            <el-button 
+              @click="sceneEvents?.resetAnimation()"
+              title="重置动画"
+            >
               <el-icon><RefreshRight /></el-icon>
-              重置
             </el-button>
           </el-button-group>
         </div>
@@ -57,20 +59,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, inject } from 'vue'
 import { ZoomIn, VideoPlay, VideoPause, RefreshRight } from '@element-plus/icons-vue'
+import type { SceneEvents } from '../../config/eventKeys'
+import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 
 const props = defineProps<{
   scale: number
   isPlaying: boolean
 }>()
 
-const emit = defineEmits<{
-  (e: 'scale-change', value: number): void
-  (e: 'start-animation'): void
-  (e: 'pause-animation'): void
-  (e: 'reset-animation'): void
-}>()
+// 注入场景事件
+const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
 
 // 本地缩放值
 const localScale = ref(props.scale)
@@ -82,7 +82,7 @@ watch(() => props.scale, (newScale) => {
 
 // 处理缩放变化
 const handleScaleChange = (value: number) => {
-  emit('scale-change', value)
+  sceneEvents?.scaleChange(value)
 }
 </script>
 
@@ -93,6 +93,7 @@ const handleScaleChange = (value: number) => {
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 
     &:last-child {
       margin-bottom: 0;
@@ -114,8 +115,36 @@ const handleScaleChange = (value: number) => {
         justify-content: center;
         align-items: center;
         gap: 8px;
+
+        .el-button-group {
+          .el-button {
+            padding: 8px 16px;
+
+            .el-icon {
+              margin-right: 0;
+            }
+
+            &:hover {
+              background-color: var(--el-color-primary-light-7);
+              color: var(--el-color-primary);
+            }
+
+            &.is-disabled {
+              &:hover {
+                background-color: var(--el-button-disabled-bg-color);
+                color: var(--el-button-disabled-text-color);
+              }
+            }
+          }
+        }
       }
     }
   }
+}
+
+// 调整滑块样式
+:deep(.el-slider) {
+  --el-slider-button-size: 16px;
+  --el-slider-height: 4px;
 }
 </style> 

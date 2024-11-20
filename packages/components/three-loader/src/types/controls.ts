@@ -1,17 +1,20 @@
 import type { SceneLightsConfig } from './lights'
+import type { IHelperOptions } from './scene'
 
 /**
  * 模型控制状态接口
  */
 export interface IModelControls {
   /** 模型缩放 */
-  scale?: number
+  scale: number
   /** 是否正在播放动画 */
-  isPlaying?: boolean
+  isPlaying: boolean
   /** 是否显示线框 */
-  wireframe?: boolean
+  wireframe: boolean
   /** 光源配置 */
-  lights?: SceneLightsConfig
+  lights: SceneLightsConfig
+  /** 辅助工具配置 */
+  helperConfig: IHelperOptions
 }
 
 /**

@@ -8,21 +8,21 @@
               <span>网格辅助线</span>
               <el-switch
                 v-model="showGrid"
-                @change="$emit('toggle-grid', showGrid)"
+                @change="sceneEvents?.toggleGrid(showGrid)"
               />
             </div>
             <div class="render-option">
               <span>坐标轴辅助线</span>
               <el-switch
                 v-model="showAxes"
-                @change="$emit('toggle-axes', showAxes)"
+                @change="sceneEvents?.toggleAxes(showAxes)"
               />
             </div>
             <div class="render-option">
               <span>显示地板</span>
               <el-switch
                 v-model="showFloor"
-                @change="$emit('toggle-floor', showFloor)"
+                @change="sceneEvents?.toggleFloor(showFloor)"
               />
             </div>
             <div class="render-option">
@@ -40,7 +40,17 @@
               <span>性能监控</span>
               <el-switch
                 v-model="showStats"
-                @change="$emit('toggle-stats', showStats)"
+                @change="sceneEvents?.toggleStats(showStats)"
+              />
+            </div>
+            <div class="render-option">
+              <span>背景颜色</span>
+              <el-color-picker
+                v-model="backgroundColor"
+                show-alpha
+                size="small"
+                :predefine="predefineColors"
+                @change="handleBackgroundColorChange"
               />
             </div>
           </div>
@@ -51,14 +61,20 @@
 </template>
 
 <script setup lang="ts">
-import { Monitor } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { ref, inject } from 'vue'
+import type { SceneEvents } from '../../config/eventKeys'
+import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
+import { defaultHelperConfig } from '../../config/helperConfig'
 
-const showGrid = ref(true)
-const showAxes = ref(true)
-const showStats = ref(true)
-const showFloor = ref(true)
-const floorColor = ref('#cccccc')
+// 使用 defaultHelperConfig 的初始值
+const showGrid = ref(defaultHelperConfig.showGrid)
+const showAxes = ref(defaultHelperConfig.showAxes)
+const showStats = ref(defaultHelperConfig.showStats)
+const showFloor = ref(defaultHelperConfig.showFloor)
+const floorColor = ref(defaultHelperConfig.floorColor?.toString())
+const backgroundColor = ref('#f0f2f5')
+
+const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
 
 // 预设颜色
 const predefineColors = ref([
@@ -70,18 +86,14 @@ const predefineColors = ref([
   '#a9a9a9'   // 深灰色
 ])
 
-const emit = defineEmits<{
-  (e: 'toggle-grid', show: boolean): void
-  (e: 'toggle-axes', show: boolean): void
-  (e: 'toggle-stats', show: boolean): void
-  (e: 'toggle-floor', show: boolean): void
-  (e: 'update-floor-color', color: string): void
-}>()
-
 const handleFloorColorChange = (color: string) => {
   if (showFloor.value) {
-    emit('update-floor-color', color)
+    sceneEvents?.updateFloorColor(color)
   }
+}
+
+const handleBackgroundColorChange = (color: string) => {
+  sceneEvents?.updateBackgroundColor(color)
 }
 </script>
 

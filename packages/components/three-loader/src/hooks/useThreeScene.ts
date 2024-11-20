@@ -215,6 +215,23 @@ export function useThreeScene(options: ISceneOptions = {}) {
     }
   }
 
+  /**
+   * 设置场景背景颜色
+   */
+  const setBackgroundColor = (color: number | string) => {
+    if (!scene.value) {
+      console.warn('设置背景颜色失败: 场景未初始化')
+      return
+    }
+
+    try {
+      scene.value.background = new THREE.Color(color)
+      console.log('场景背景颜色已更新:', color)
+    } catch (error) {
+      console.error('设置背景颜色失败:', error)
+    }
+  }
+
   // 生命周期钩子
   onMounted(() => window.addEventListener('resize', handleResize))
   onBeforeUnmount(() => dispose())
@@ -232,6 +249,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
     toggleAxes: (show: boolean) => toggleAxes(scene.value, show),
     toggleFloor: (show: boolean) => toggleFloor(scene.value, show),
     updateFloorColor,
+    setBackgroundColor,
     updateLight
   }
 } 
