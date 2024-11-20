@@ -295,8 +295,9 @@ const updatePointLightPosition = () => {
 
 <style lang="scss" scoped>
 .control-sections {
-  height: calc(100vh - 350px);
+  height: calc(100vh - 260px);
   overflow: auto;
+  padding: 5px;
   .control-section {
     background: var(--el-fill-color-light);
     border-radius: 8px;

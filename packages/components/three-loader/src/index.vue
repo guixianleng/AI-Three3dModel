@@ -1,5 +1,6 @@
 <template>
   <div class="three-container">
+    <!-- 加载动画 -->
     <LoadingSpinner 
       v-if="loading"
       :progress="loadingProgress"
@@ -7,26 +8,14 @@
       :text-change-interval="2000"
     />
 
+    <!-- Three.js 渲染容器 -->
     <div ref="threeContainer" class="canvas-container"></div>
     
-    <div class="control-panel" v-show="!loading">
-      <ModelControls 
-        :model-controls="modelControls"
-        @reset-view="resetView"
-        @take-screenshot="takeScreenshot"
-        @start-animation="handleStartAnimation"
-        @pause-animation="handlePauseAnimation"
-        @reset-animation="handleResetAnimation"
-        @toggle-grid="handleToggleGrid"
-        @toggle-stats="handleToggleStats"
-        @toggle-axes="handleToggleAxes"
-        @toggle-floor="handleToggleFloor"
-        @update-floor-color="handleUpdateFloorColor"
-        @scale-change="handleScaleChange"
-        @light-change="handleLightChange"
-        @update-background-color="handleUpdateBackgroundColor"
-      />
-    </div>
+    <!-- 模型控制面板 -->
+    <ModelControls 
+      :model-controls="modelControls"
+      class="model-controls"
+    />
   </div>
 </template>
 
@@ -34,66 +23,64 @@
 import { ref, onMounted, provide } from 'vue'
 import * as THREE from 'three'
 
+// Hooks
 import { useThreeScene } from './hooks/useThreeScene'
 import { useFBXModel } from './hooks/useFBXModel'
 import { useModelAnimation } from './hooks/useModelAnimation'
-import { useThreeLights } from './hooks/useThreeLights'
 
+// 组件
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
+
+// 类型和配置
 import type { IModelControls } from './types'
 import { defaultLightConfig } from './config/lightConfig'
 import { defaultHelperConfig } from './config/helperConfig'
 import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
 
+// 场景管理
 const {
   threeContainer,
   scene,
   resetView,
-  renderer,
   initScene,
   toggleGrid,
   toggleStats,
   toggleAxes,
   toggleFloor,
   updateFloorColor,
-  updateLight,
-  setBackgroundColor
+  setBackgroundColor,
+  updateLight
 } = useThreeScene({
-  showGrid: true,
-  showStats: true,
   backgroundColor: 0xf0f2f5,
-  lights: defaultLightConfig
+  lights: defaultLightConfig,
+  helper: defaultHelperConfig
 })
 
+// 模型管理
 const {
   loading,
   loadingProgress,
   loadModel
 } = useFBXModel()
 
+// 动画管理
 const {
+  modelControls,
   startAnimation,
   pauseAnimation,
   resetAnimation,
   updateAnimation
 } = useModelAnimation()
 
-// 初始化模型控制状态
-const modelControls = ref<IModelControls>({
-  scale: 0.5,
-  isPlaying: false,
-  wireframe: false,
-  lights: defaultLightConfig,
-  helperConfig: defaultHelperConfig
-})
-
-// 保存模型引用
+// 模型引用
 const modelRef = ref<THREE.Group | null>(null)
 let mixer: THREE.AnimationMixer
 let animations: THREE.AnimationAction[] = []
 
-// 初始化模型
+/**
+ * 初始化模型
+ */
 const initModel = async () => {
   try {
     console.log('开始初始化场景...')
@@ -117,76 +104,52 @@ const initModel = async () => {
         }
       }
       animateLoop()
-    } else {
-      throw new Error('场景初始化失败')
     }
   } catch (error) {
-    console.error('加载模型失败:', error)
+    console.error('初始化失败:', error)
   }
 }
 
-// 截图功能
+/**
+ * 截图功能
+ */
 const takeScreenshot = () => {
-  if (!renderer) return
   const link = document.createElement('a')
   link.download = 'screenshot.png'
-  link.href = renderer.domElement.toDataURL('image/png')
+  link.href = threeContainer.value?.querySelector('canvas')?.toDataURL('image/png') || ''
   link.click()
 }
 
-// 动画控制方法
+// 事件处理函数
 const handleStartAnimation = () => {
   if (mixer && animations.length) {
     startAnimation(mixer, animations)
-    modelControls.value.isPlaying = true
   }
 }
 
 const handlePauseAnimation = () => {
   if (mixer) {
     pauseAnimation(mixer)
-    modelControls.value.isPlaying = false
   }
 }
 
 const handleResetAnimation = () => {
   if (mixer) {
     resetAnimation(mixer)
-    modelControls.value.isPlaying = false
   }
 }
 
-// 网格和性能监控的控制方法
-const handleToggleGrid = (show: boolean) => {
-  toggleGrid(show)
-}
-
-const handleToggleStats = (show: boolean) => {
-  toggleStats(show)
-}
-
-const handleToggleAxes = (show: boolean) => {
-  toggleAxes(show)
-}
-
-// 添加地板显示/隐藏处理函数
-const handleToggleFloor = (show: boolean) => {
-  toggleFloor(show)
-}
-
-// 修改缩放处理函数
 const handleScaleChange = (scale: number) => {
   if (modelRef.value) {
     modelRef.value.scale.setScalar(scale)
   }
 }
 
-// 修改光源处理函数
 const handleLightChange = (lightType: string, property: string, value: any) => {
   try {
     // 更新控制状态
-    if (lightType in modelControls.value.lights) {
-      const light = modelControls.value.lights[lightType]
+    if (lightType in modelControls.lights) {
+      const light = modelControls.lights[lightType]
       if (property.includes('.')) {
         const [prop, subProp] = property.split('.')
         light[prop][subProp] = value
@@ -203,14 +166,10 @@ const handleLightChange = (lightType: string, property: string, value: any) => {
   }
 }
 
-// 添加地板颜色更新处理函数
-const handleUpdateFloorColor = (color: string) => {
-  updateFloorColor(color)
-}
-
-// 添加背景颜色更新处理函数
-const handleUpdateBackgroundColor = (color: string) => {
-  setBackgroundColor(color)
+const handleUpdateModelPosition = (position: { x: number, y: number, z: number }) => {
+  if (modelRef.value) {
+    modelRef.value.position.set(position.x, position.y, position.z)
+  }
 }
 
 // 提供场景事件
@@ -220,16 +179,18 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   startAnimation: handleStartAnimation,
   pauseAnimation: handlePauseAnimation,
   resetAnimation: handleResetAnimation,
-  toggleGrid: handleToggleGrid,
-  toggleStats: handleToggleStats,
-  toggleAxes: handleToggleAxes,
-  toggleFloor: handleToggleFloor,
-  updateFloorColor: handleUpdateFloorColor,
-  updateBackgroundColor: handleUpdateBackgroundColor,
+  toggleGrid,
+  toggleStats,
+  toggleAxes,
+  toggleFloor,
+  updateFloorColor,
+  updateBackgroundColor: setBackgroundColor,
   scaleChange: handleScaleChange,
-  lightChange: handleLightChange
+  lightChange: handleLightChange,
+  updateModelPosition: handleUpdateModelPosition
 })
 
+// 初始化
 onMounted(() => {
   initModel()
 })
@@ -253,12 +214,20 @@ onMounted(() => {
     }
   }
   
-  .control-panel {
+  .model-controls {
     position: absolute;
-    top: 20px;
-    right: 20px;
+    top: 0;
+    right: 0;
+    bottom: 0;
     width: 320px;
-    z-index: 10;
+    z-index: 99;
+  }
+}
+
+// 暗黑模式适配
+:deep(html.dark) {
+  .canvas-container {
+    background-color: #1a1a1a;
   }
 }
 </style> 

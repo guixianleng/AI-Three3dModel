@@ -1,20 +1,15 @@
 import { reactive } from 'vue'
 import * as THREE from 'three'
 import type { IModelControls } from '../types/controls'
-import { defaultLightConfig } from '../config/lightConfig'
-import { defaultHelperConfig } from '../config/helperConfig'
+import { defaultModelConfig } from '../config/modelConfig'
 
 /**
  * 3D模型动画控制 Hook
  */
 export function useModelAnimation() {
-  // 模型控制状态
+  // 使用默认配置初始化模型控制状态
   const modelControls: IModelControls = reactive({
-    scale: 1,
-    isPlaying: false,
-    wireframe: false,
-    lights: defaultLightConfig,
-    helperConfig: defaultHelperConfig
+    ...defaultModelConfig
   })
 
   // 动画相关变量

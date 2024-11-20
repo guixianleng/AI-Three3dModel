@@ -1,128 +1,145 @@
 <template>
-  <div class="loading-container">
-    <div class="loading-content">
-      <!-- Ant Design 风格的加载动画 -->
-      <div class="ant-spin">
+  <div class="loading-spinner">
+    <div class="spinner-container">
+      <div class="ant-spinner">
         <span class="ant-spin-dot">
-          <i class="ant-spin-dot-item"></i>
-          <i class="ant-spin-dot-item"></i>
-          <i class="ant-spin-dot-item"></i>
-          <i class="ant-spin-dot-item"></i>
+          <i class="dot dot1"></i>
+          <i class="dot dot2"></i>
+          <i class="dot dot3"></i>
+          <i class="dot dot4"></i>
         </span>
-        <div class="ant-spin-text" v-if="showText">
-          <span class="text">{{ currentText }}</span>
-          <div class="progress-value" v-if="showProgress">{{ Math.floor(progress) }}%</div>
-        </div>
       </div>
-      
-      <!-- 进度条 -->
-      <div class="progress-bar" v-if="showProgress">
-        <div class="progress" :style="{ width: `${progress}%` }">
-          <div class="glow"></div>
-        </div>
+      <div class="progress-text">{{ currentText }}</div>
+      <div class="progress-bar">
+        <div class="progress-fill" :style="{ width: `${progress}%` }"></div>
       </div>
+      <div class="progress-value">{{ progress.toFixed(1) }}%</div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 
-const props = defineProps({
-  text: {
-    type: String,
-    default: '加载中...'
-  },
-  texts: {
-    type: Array<string>,
-    default: () => [
-      '正在加载...',
-      '初始化中...',
-      '马上就好...',
-      '请稍候...'
-    ]
-  },
-  progress: {
-    type: Number,
-    default: 0
-  },
-  showProgress: {
-    type: Boolean,
-    default: true
-  },
-  showText: {
-    type: Boolean,
-    default: true
-  },
-  autoChangeText: {
-    type: Boolean,
-    default: true
-  },
-  textChangeInterval: {
-    type: Number,
-    default: 2000
+const props = defineProps<{
+  texts?: string[]
+  progress: number
+  autoChangeText?: boolean
+  textChangeInterval?: number
+}>()
+
+const defaultTexts = [
+  '正在加载模型...',
+  '初始化场景...',
+  '准备渲染...',
+  '马上就好...'
+]
+
+const currentText = ref(props.texts?.[0] || defaultTexts[0])
+let textChangeTimer: number | null = null
+let currentIndex = 0
+
+// 自动切换文本
+const startTextChange = () => {
+  if (!props.autoChangeText) return
+  
+  // 先清除可能存在的定时器
+  clearTextChange()
+  
+  textChangeTimer = window.setInterval(() => {
+    const texts = props.texts || defaultTexts
+    currentIndex = (currentIndex + 1) % texts.length
+    currentText.value = texts[currentIndex]
+    console.log('切换加载文本:', currentText.value) // 添加日志
+  }, props.textChangeInterval || 2000)
+}
+
+// 清理定时器
+const clearTextChange = () => {
+  if (textChangeTimer) {
+    clearInterval(textChangeTimer)
+    textChangeTimer = null
+  }
+}
+
+// 监听进度变化
+watch(() => props.progress, (newProgress) => {
+  // 根据进度自动选择文本
+  if (newProgress < 25) {
+    currentIndex = 0
+  } else if (newProgress < 50) {
+    currentIndex = 1
+  } else if (newProgress < 75) {
+    currentIndex = 2
+  } else {
+    currentIndex = 3
+  }
+  currentText.value = (props.texts || defaultTexts)[currentIndex]
+
+  if (newProgress >= 100) {
+    clearTextChange()
   }
 })
 
-let textIndex = 0
-const currentText = ref(props.text)
-let textChangeTimer: number | undefined
+// 监听自动切换文本的配置变化
+watch(() => props.autoChangeText, (newValue) => {
+  if (newValue) {
+    startTextChange()
+  } else {
+    clearTextChange()
+  }
+})
 
-// 更新加载文本
-const updateLoadingText = () => {
-  textIndex = (textIndex + 1) % props.texts.length
-  currentText.value = props.texts[textIndex]
-}
-
-// 监听 text prop 的变化
-watch(() => props.text, (newText) => {
-  currentText.value = newText
+// 监听文本切换间隔的变化
+watch(() => props.textChangeInterval, () => {
+  if (props.autoChangeText) {
+    startTextChange() // 重新启动定时器以使用新的间隔
+  }
 })
 
 onMounted(() => {
   if (props.autoChangeText) {
-    textChangeTimer = window.setInterval(updateLoadingText, props.textChangeInterval)
+    startTextChange()
   }
 })
 
 onBeforeUnmount(() => {
-  if (textChangeTimer) {
-    clearInterval(textChangeTimer)
-  }
+  clearTextChange()
 })
 </script>
 
 <style lang="scss" scoped>
-.loading-container {
+.loading-spinner {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: 1000;
 
-  .loading-content {
+  .spinner-container {
     text-align: center;
-
-    .ant-spin {
+    
+    .ant-spinner {
       position: relative;
-      display: inline-block;
-      margin-bottom: 40px;
+      margin: 0 auto 20px;
+      width: 50px;
+      height: 50px;
 
       .ant-spin-dot {
         position: relative;
         display: inline-block;
-        width: 48px;
-        height: 48px;
+        width: 100%;
+        height: 100%;
         transform: rotate(45deg);
         animation: antRotate 1.2s infinite linear;
 
-        .ant-spin-dot-item {
+        .dot {
           position: absolute;
           display: block;
           width: 20px;
@@ -134,76 +151,56 @@ onBeforeUnmount(() => {
           opacity: 0.3;
           animation: antSpinMove 1s infinite linear alternate;
 
-          &:nth-child(1) {
+          &.dot1 {
             top: 0;
             left: 0;
-            animation-delay: 0s;
           }
 
-          &:nth-child(2) {
+          &.dot2 {
             top: 0;
             right: 0;
             animation-delay: 0.4s;
           }
 
-          &:nth-child(3) {
+          &.dot3 {
             right: 0;
             bottom: 0;
             animation-delay: 0.8s;
           }
 
-          &:nth-child(4) {
+          &.dot4 {
             bottom: 0;
             left: 0;
             animation-delay: 1.2s;
           }
         }
       }
+    }
 
-      .ant-spin-text {
-        margin-top: 24px;
-        color: #fff;
-        font-size: 16px;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-
-        .text {
-          display: inline-block;
-          min-width: 120px;
-          animation: fadeIn 0.5s ease;
-        }
-
-        .progress-value {
-          margin-top: 8px;
-          font-size: 14px;
-          color: var(--el-color-primary);
-        }
-      }
+    .progress-text {
+      font-size: 16px;
+      color: var(--el-text-color-primary);
+      margin-bottom: 10px;
     }
 
     .progress-bar {
-      width: 300px;
+      width: 200px;
       height: 4px;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--el-fill-color-light);
       border-radius: 2px;
       overflow: hidden;
+      margin: 0 auto 8px;
 
-      .progress {
+      .progress-fill {
         height: 100%;
         background: var(--el-color-primary);
-        border-radius: 2px;
-        position: relative;
         transition: width 0.3s ease;
-
-        .glow {
-          position: absolute;
-          top: 0;
-          right: 0;
-          width: 20px;
-          height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8));
-          animation: glowMove 1.5s ease-in-out infinite;
-        }
       }
+    }
+
+    .progress-value {
+      font-size: 14px;
+      color: var(--el-text-color-secondary);
     }
   }
 }
@@ -220,23 +217,10 @@ onBeforeUnmount(() => {
   }
 }
 
-@keyframes glowMove {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(500%);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+// 暗黑模式适配
+:deep(html.dark) {
+  .loading-spinner {
+    background: rgba(0, 0, 0, 0.9);
   }
 }
 </style> 

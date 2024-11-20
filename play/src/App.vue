@@ -11,19 +11,19 @@ import Home from './views/Home.vue'
 </script>
 
 <style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 #app {
-  width: 100%;
-  height: 100vh;
+  height: 100%;
 }
 
-.el-main {
-  overflow-x: hidden;
+/* .el-main {
   padding: 0;
   margin: 0;
-}
-
-:deep(.el-main) {
-  padding: 0;
-  margin: 0;
-}
+} */
 </style> 
