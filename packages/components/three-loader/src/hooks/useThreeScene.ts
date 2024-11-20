@@ -1,8 +1,11 @@
 import * as THREE from 'three'
-import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { ref, shallowRef, onMounted, onBeforeUnmount, provide } from 'vue'
 import Stats from "three/examples/jsm/libs/stats.module"
 import { useThreeLights, type SceneLights } from './useThreeLights'
+import { useThreeCamera } from './useThreeCamera'
+import type { CameraOptions } from './useThreeCamera'
+import type { IModelControls } from '../types'
+import { defaultLightConfig } from '../config/lightConfig'
 
 /**
  * 场景配置选项接口
@@ -14,39 +17,59 @@ interface SceneOptions {
   showStats?: boolean
   /** 背景颜色 */
   backgroundColor?: number
+  /** 相机配置 */
+  camera?: CameraOptions
+  /** 光源配置 */
+  lights?: IModelControls['lights']
 }
+
+export const LIGHTS_KEY = Symbol('lights')
 
 /**
  * Three.js 场景管理 Hook
+ * @param options - 场景配置选项
  */
 export function useThreeScene(options: SceneOptions = {}) {
   // 解构配置选项，设置默认值
   const {
     showGrid = true,
     showStats = true,
-    backgroundColor = 0xf0f2f5
+    backgroundColor = 0xf0f2f5,
+    camera: cameraOptions,
+    lights: lightConfig = defaultLightConfig  // 使用默认光源配置
   } = options
 
   // 场景相关的响应式引用
-  const threeContainer = ref<HTMLElement>() // 容器元素
-  const scene = shallowRef<THREE.Scene | null>(null) // 场景实例
-  
-  // 将 camera 和 orbitControls 改为响应式引用
-  const camera = shallowRef<THREE.PerspectiveCamera>()
-  const orbitControls = shallowRef<OrbitControls>()
+  const threeContainer = ref<HTMLElement>()    // 容器元素
+  const scene = shallowRef<THREE.Scene | null>(null)  // 场景实例
   
   // 非响应式的场景组件
   let renderer: THREE.WebGLRenderer          // 渲染器
   let stats: Stats | null = null             // 性能监控
-  let gridHelper: THREE.GridHelper | null = null // 网格辅助线
+  let gridHelper: THREE.GridHelper | null = null  // 网格辅助线
   let lights: SceneLights | null = null      // 场景光源
   
-  // 引入光源管理 hook
-  const { addLightsToScene, removeLightsFromScene } = useThreeLights()
+  // 引入相关的 hooks
+  const lightUtils = useThreeLights()
+  const { addLightsToScene, removeLightsFromScene, updateLight } = lightUtils
+
+  // 提供给子组件使用
+  provide(LIGHTS_KEY, lightUtils)
+
+  const { 
+    camera, 
+    controls, 
+    createCamera, 
+    createControls, 
+    updateAspect,
+    resetCamera,
+    updateControls,
+    dispose: disposeCamera 
+  } = useThreeCamera(cameraOptions)
 
   /**
    * 初始化场景
-   * @returns {Promise<THREE.Scene>} 初始化完成的场景实例
+   * @returns Promise<THREE.Scene> 初始化完成的场景实例
    */
   const initScene = async () => {
     return new Promise<THREE.Scene>((resolve, reject) => {
@@ -60,44 +83,43 @@ export function useThreeScene(options: SceneOptions = {}) {
           const newScene = new THREE.Scene()
           newScene.background = new THREE.Color(backgroundColor)
           scene.value = newScene
-          console.log('场景创建成功')
 
           // 创建相机
           const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
-          camera.value = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000)
-          camera.value.position.set(0, 100, 200)
+          createCamera(aspect)
 
           // 创建渲染器
           renderer = new THREE.WebGLRenderer({ 
-            antialias: true, 
-            alpha: true
+            antialias: true,  // 启用抗锯齿
+            alpha: true       // 启用透明度
           })
           renderer.setSize(threeContainer.value.clientWidth, threeContainer.value.clientHeight)
           renderer.setPixelRatio(window.devicePixelRatio)
           threeContainer.value.appendChild(renderer.domElement)
           
-          renderer.shadowMap.enabled = true
-          renderer.shadowMap.type = THREE.PCFSoftShadowMap
-          renderer.outputEncoding = THREE.sRGBEncoding
-          renderer.toneMapping = THREE.ACESFilmicToneMapping
-          renderer.toneMappingExposure = 1
+          // 配置渲染器
+          renderer.shadowMap.enabled = true   // 启用阴影
+          renderer.shadowMap.type = THREE.PCFSoftShadowMap  // 使用PCF柔和阴影
+          renderer.shadowMap.autoUpdate = true
+          renderer.outputEncoding = THREE.sRGBEncoding      // 使用sRGB颜色空间
+          renderer.toneMapping = THREE.ACESFilmicToneMapping  // 使用ACES电影色调映射
+          renderer.toneMappingExposure = 1    // 设置色调映射曝光度
 
           // 创建控制器
-          if (camera.value && renderer) {
-            orbitControls.value = new OrbitControls(camera.value, renderer.domElement)
-            orbitControls.value.enableDamping = true
-            orbitControls.value.dampingFactor = 0.05
-          }
+          createControls(renderer.domElement)
 
           // 添加光源
           if (scene.value) {
-            lights = addLightsToScene(scene.value)
-            console.log('光源设置完成')
+            console.log('正在初始化场景光源...')
+            lights = addLightsToScene(scene.value, lightConfig)
+            if (!lights) {
+              throw new Error('光源初始化失败')
+            }
+            console.log('场景光源初始化完成')
           }
 
           // 添加地板和网格
           setupFloor()
-          console.log('地板和网格设置完成')
 
           // 性能监控
           if (showStats) {
@@ -107,19 +129,18 @@ export function useThreeScene(options: SceneOptions = {}) {
           // 开始渲染循环
           const renderLoop = () => {
             requestAnimationFrame(renderLoop)
-            if (orbitControls.value) {
-              orbitControls.value.update()
-            }
+            updateControls()
             if (stats) {
               stats.update()
             }
             if (renderer && scene.value && camera.value) {
+              // 更新阴影
+              renderer.shadowMap.needsUpdate = true
               renderer.render(scene.value, camera.value)
             }
           }
           renderLoop()
 
-          console.log('场景初始化完成')
           resolve(newScene)
         } catch (error) {
           console.error('场景初始化失败:', error)
@@ -130,28 +151,43 @@ export function useThreeScene(options: SceneOptions = {}) {
   }
 
   /**
+   * 处理窗口大小变化
+   */
+  const handleResize = () => {
+    if (!threeContainer.value || !renderer) return
+    
+    const width = threeContainer.value.clientWidth
+    const height = threeContainer.value.clientHeight
+    
+    updateAspect(width / height)
+    renderer.setSize(width, height)
+  }
+
+  /**
    * 设置地板和网格
    */
   const setupFloor = () => {
     if (!scene.value) return
     
     // 创建地板
-    const floorGeometry = new THREE.PlaneGeometry(1000, 1000)
+    const floorGeometry = new THREE.PlaneGeometry(2000, 2000)
     const floorMaterial = new THREE.MeshStandardMaterial({ 
       color: 0xcccccc,
       roughness: 0.8,
       metalness: 0.2
     })
     const floor = new THREE.Mesh(floorGeometry, floorMaterial)
-    floor.rotation.x = -Math.PI / 2 // 使地板水平
+    floor.rotation.x = -Math.PI / 2
     floor.position.y = 0
+    
+    // 确保地板接收阴影
     floor.receiveShadow = true
     scene.value.add(floor)
 
     // 添加网格辅助线
     if (showGrid) {
-      gridHelper = new THREE.GridHelper(1000, 50, 0x888888, 0x888888)
-      gridHelper.position.y = 0.1 // 略微抬高网格，防止与地板重叠
+      gridHelper = new THREE.GridHelper(2000, 100, 0x888888, 0x888888)
+      gridHelper.position.y = 0.1
       scene.value.add(gridHelper)
     }
   }
@@ -167,41 +203,8 @@ export function useThreeScene(options: SceneOptions = {}) {
   }
 
   /**
-   * 处理窗口大小变化
-   */
-  const handleResize = () => {
-    if (!threeContainer.value || !camera.value || !renderer) return
-    
-    const width = threeContainer.value.clientWidth
-    const height = threeContainer.value.clientHeight
-    
-    camera.value.aspect = width / height
-    camera.value.updateProjectionMatrix()
-    renderer.setSize(width, height)
-  }
-
-  /**
-   * 重置相机位置和视角
-   */
-  const resetCamera = () => {
-    if (!camera.value || !orbitControls.value) {
-      console.warn('相机或控制器未初始化')
-      return
-    }
-    
-    try {
-      camera.value.position.set(0, 100, 200)
-      camera.value.lookAt(0, 0, 0)
-      orbitControls.value.target.set(0, 0, 0)
-      orbitControls.value.update()
-    } catch (error) {
-      console.error('重置相机失败:', error)
-    }
-  }
-
-  /**
    * 切换网格显示状态
-   * @param {boolean} show - 是否显示网格
+   * @param show - 是否显示网格
    */
   const toggleGrid = (show: boolean) => {
     if (!scene.value || !gridHelper) return
@@ -215,7 +218,7 @@ export function useThreeScene(options: SceneOptions = {}) {
 
   /**
    * 切换性能监控显示状态
-   * @param {boolean} show - 是否显示性能监控
+   * @param show - 是否显示性能监控
    */
   const toggleStats = (show: boolean) => {
     if (!threeContainer.value) return
@@ -234,6 +237,7 @@ export function useThreeScene(options: SceneOptions = {}) {
   })
 
   onBeforeUnmount(() => {
+    // 清理资源
     window.removeEventListener('resize', handleResize)
     if (threeContainer.value && stats) {
       threeContainer.value.removeChild(stats.dom)
@@ -241,28 +245,23 @@ export function useThreeScene(options: SceneOptions = {}) {
     if (scene.value && lights) {
       removeLightsFromScene(scene.value, lights)
     }
-    if (orbitControls.value) {
-      orbitControls.value.dispose()
-    }
+    disposeCamera()
     if (renderer) {
       renderer.dispose()
     }
-    // 清空引用
-    camera.value = null
-    orbitControls.value = null
     scene.value = null
   })
 
-  // 返回场景管理相关的方法和属性
   return {
     threeContainer,
     scene,
     camera,
+    controls,
     renderer,
-    orbitControls,
-    resetCamera,
     initScene,
+    resetCamera,
     toggleGrid,
-    toggleStats
+    toggleStats,
+    updateLight
   }
 } 

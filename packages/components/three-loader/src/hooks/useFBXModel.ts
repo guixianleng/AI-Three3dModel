@@ -50,21 +50,62 @@ export function useFBXModel() {
               // 设置模型材质和阴影
               object.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
-                  child.castShadow = true
-                  child.receiveShadow = true
+                  // 确保使用标准材质
                   if (child.material) {
                     if (Array.isArray(child.material)) {
-                      child.material.forEach(mat => {
-                        mat.roughness = 0.7
-                        mat.metalness = 0.3
-                        mat.needsUpdate = true
+                      child.material = child.material.map(mat => {
+                        // 创建新的标准材质，保留原始颜色和贴图
+                        const newMat = new THREE.MeshPhongMaterial({
+                          color: mat.color || 0xffffff,
+                          map: mat.map,
+                          normalMap: mat.normalMap,
+                          shininess: 30,           // 增加光泽度
+                          specular: 0x444444,      // 设置高光颜色
+                          reflectivity: 1,         // 增加反射率
+                          side: THREE.DoubleSide,  // 双面渲染
+                          transparent: true,        // 启用透明
+                          opacity: 1               // 设置不透明度
+                        })
+                        // 确保材质更新
+                        newMat.needsUpdate = true
+                        return newMat
                       })
                     } else {
-                      child.material.roughness = 0.7
-                      child.material.metalness = 0.3
+                      // 创建新的标准材质
+                      const newMat = new THREE.MeshPhongMaterial({
+                        color: child.material.color || 0xffffff,
+                        map: child.material.map,
+                        normalMap: child.material.normalMap,
+                        shininess: 30,
+                        specular: 0x444444,
+                        reflectivity: 1,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 1
+                      })
+                      child.material = newMat
                       child.material.needsUpdate = true
                     }
                   }
+
+                  // 设置阴影
+                  child.castShadow = true
+                  child.receiveShadow = true
+
+                  // 确保法线正确
+                  if (child.geometry) {
+                    child.geometry.computeVertexNormals()
+                    child.geometry.computeBoundingSphere()
+                    child.geometry.computeBoundingBox()
+                    child.geometry.normalizeNormals()
+                  }
+
+                  // 打印材质信息以便调试
+                  console.log('Mesh材质信息:', {
+                    name: child.name,
+                    material: child.material,
+                    geometry: child.geometry
+                  })
                 }
               })
 

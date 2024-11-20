@@ -2,6 +2,12 @@
   <div class="three-container">
     <LoadingSpinner 
       v-if="loading"
+      :texts="[
+        '正在加载模型...',
+        '初始化场景...',
+        '准备渲染...',
+        '马上就好...'
+      ]"
       :progress="loadingProgress"
       :auto-change-text="true"
       :text-change-interval="2000"
@@ -18,18 +24,16 @@
         @pause-animation="handlePauseAnimation"
         @reset-animation="handleResetAnimation"
         @toggle-grid="handleToggleGrid"
-        @toggle-stats="handleToggleStats"
+        @toggle-stats="handleToggleStats"  
         @scale-change="handleScaleChange"
         @light-change="handleLightChange"
-        @shadow-change="handleShadowChange"
-        @light-angle-change="handleLightAngleChange"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import * as THREE from 'three'
 
 import { useThreeScene } from './hooks/useThreeScene'
@@ -40,6 +44,7 @@ import { useThreeLights } from './hooks/useThreeLights'
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
 import type { IModelControls } from './types'
+import { defaultLightConfig } from './config/lightConfig'
 
 const {
   threeContainer,
@@ -52,7 +57,8 @@ const {
 } = useThreeScene({
   showGrid: true,
   showStats: true,
-  backgroundColor: 0xf0f2f5
+  backgroundColor: 0xf0f2f5,
+  lights: defaultLightConfig
 })
 
 const {
@@ -68,30 +74,12 @@ const {
   updateAnimation
 } = useModelAnimation()
 
-const { lights, updateLightIntensity, updateShadowEnabled, addLightsToScene, updateLightAngle } = useThreeLights()
-
 // 初始化模型控制状态
 const modelControls = ref<IModelControls>({
   scale: 1,
   isPlaying: false,
   wireframe: false,
-  lights: {
-    ambientIntensity: 0.5,
-    mainLightIntensity: 1.0,
-    fillLightIntensity: 0.3,
-    hemiLightIntensity: 0.2,
-    shadowEnabled: true,
-    mainLightAngle: {
-      x: 45,
-      y: 45,
-      z: 0
-    },
-    fillLightAngle: {
-      x: 45,
-      y: -45,
-      z: 0
-    }
-  }
+  lights: defaultLightConfig
 })
 
 // 保存模型引用
@@ -99,58 +87,13 @@ const modelRef = ref<THREE.Group | null>(null)
 let mixer: THREE.AnimationMixer
 let animations: THREE.AnimationAction[] = []
 
-// 修改缩放处理函数
-const handleScaleChange = (scale: number) => {
-  if (modelRef.value) {
-    modelRef.value.scale.setScalar(scale)
-  }
-}
-
-// 处理光源强度变化
-const handleLightChange = (lightType: string, intensity: number) => {
-  console.log('光源变化:', lightType, intensity)
-  switch(lightType) {
-    case 'ambientLight':
-      updateLightIntensity('ambientLight', intensity)
-      break
-    case 'mainLight':
-      updateLightIntensity('mainLight', intensity)
-      break
-    case 'fillLight':
-      updateLightIntensity('fillLight', intensity)
-      break
-    case 'hemiLight':
-      updateLightIntensity('hemiLight', intensity)
-      break
-  }
-}
-
-// 处理阴影开关
-const handleShadowChange = (enabled: boolean) => {
-  updateShadowEnabled(enabled)
-}
-
-// 修改初始化模型函数
+// 初始化模型
 const initModel = async () => {
   try {
     console.log('开始初始化场景...')
     await initScene()
     
-    await new Promise(resolve => requestAnimationFrame(resolve))
-    
     if (scene.value) {
-      // 确保光源已经添加到场景中
-      if (!lights.value) {
-        addLightsToScene(scene.value)
-      }
-
-      // 初始化光源强度
-      Object.entries(modelControls.value.lights).forEach(([key, value]) => {
-        if (key !== 'shadowEnabled') {
-          handleLightChange(key, value as number)
-        }
-      })
-
       console.log('场景初始化成功，开始加载模型...')
       const modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
       const result = await loadModel(modelUrl, scene.value)
@@ -216,18 +159,39 @@ const handleToggleStats = (show: boolean) => {
   toggleStats(show)
 }
 
-// 添加光源角度变化处理函数
-const handleLightAngleChange = (
-  lightType: string,
-  angle: { x: number; y: number; z: number }
-) => {
-  updateLightAngle(lightType as 'mainLight' | 'fillLight', angle)
+// 修改缩放处理函数
+const handleScaleChange = (scale: number) => {
+  if (modelRef.value) {
+    modelRef.value.scale.setScalar(scale)
+  }
+}
+
+// 修改光源处理函数
+const handleLightChange = (lightType: string, property: string, value: any) => {
+  // 更新控制状态
+  if (lightType in modelControls.value.lights) {
+    const light = modelControls.value.lights[lightType]
+    switch (property) {
+      case 'enabled':
+        light.enabled = value
+        break
+      case 'intensity':
+        light.intensity = value
+        break
+      case 'color':
+        light.color = value
+        break
+      case 'position':
+        if ('position' in light) {
+          light.position = value
+        }
+        break
+    }
+  }
 }
 
 onMounted(() => {
-  nextTick(() => {
-    initModel()
-  })
+  initModel()
 })
 </script>
 
