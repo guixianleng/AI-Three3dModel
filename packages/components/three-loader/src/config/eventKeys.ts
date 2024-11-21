@@ -15,4 +15,5 @@ export interface SceneEvents {
   scaleChange: (value: number) => void
   lightChange: (lightType: string, property: string, value: any) => void
   updateModelPosition: (position: { x: number, y: number, z: number }) => void
+  updateGridColor: (color: string) => void
 } 

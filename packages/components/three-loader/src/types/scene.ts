@@ -35,9 +35,11 @@ export interface IHelperOptions {
   /** 网格分段数 */
   gridDivisions?: number
   /** 网格颜色 */
-  gridColor?: number
+  gridColor?: string
   /** 坐标轴大小 */
   axesSize?: number
   /** 地板颜色 */
-  floorColor?: number | string
+  floorColor?: string
+  /** 模型位置 */
+  modelPosition?: { x: number, y: number, z: number }
 }

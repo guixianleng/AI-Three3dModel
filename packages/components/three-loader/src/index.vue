@@ -172,6 +172,16 @@ const handleUpdateModelPosition = (position: { x: number, y: number, z: number }
   }
 }
 
+const handleUpdateGridColor = (color: string) => {
+  if (scene.value) {
+    const gridHelper = scene.value.getObjectByName('GridHelper') as THREE.GridHelper
+    if (gridHelper) {
+      (gridHelper.material as THREE.Material).color.set(color)
+      console.log('网格颜色已更新:', color)
+    }
+  }
+}
+
 // 提供场景事件
 provide<SceneEvents>(SCENE_EVENTS_KEY, {
   resetView,
@@ -187,7 +197,8 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   updateBackgroundColor: setBackgroundColor,
   scaleChange: handleScaleChange,
   lightChange: handleLightChange,
-  updateModelPosition: handleUpdateModelPosition
+  updateModelPosition: handleUpdateModelPosition,
+  updateGridColor: handleUpdateGridColor
 })
 
 // 初始化

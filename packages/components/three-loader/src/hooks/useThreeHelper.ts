@@ -58,6 +58,7 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
       const grid = markRaw(new THREE.GridHelper(gridSize, gridDivisions, gridColor, gridColor))
       grid.position.y = 0.1
       grid.visible = showGrid
+      grid.name = 'GridHelper'
       return grid
     } catch (error) {
       console.error('创建网格辅助线失败:', error)

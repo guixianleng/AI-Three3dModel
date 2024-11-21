@@ -115,28 +115,6 @@ const handleScaleChange = (value: number) => {
         justify-content: center;
         align-items: center;
         gap: 8px;
-
-        .el-button-group {
-          .el-button {
-            padding: 8px 16px;
-
-            .el-icon {
-              margin-right: 0;
-            }
-
-            &:hover {
-              background-color: var(--el-color-primary-light-7);
-              color: var(--el-color-primary);
-            }
-
-            &.is-disabled {
-              &:hover {
-                background-color: var(--el-button-disabled-bg-color);
-                color: var(--el-button-disabled-text-color);
-              }
-            }
-          }
-        }
       }
     }
   }

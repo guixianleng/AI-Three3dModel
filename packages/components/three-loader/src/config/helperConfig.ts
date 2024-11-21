@@ -10,7 +10,8 @@ export const defaultHelperConfig: IHelperOptions = {
   showFloor: false,
   gridSize: 2000,
   gridDivisions: 100,
-  gridColor: 0x888888,
+  gridColor: '#888888',
   axesSize: 1000,
-  floorColor: '#cccccc'
+  floorColor: '#cccccc',
+  modelPosition: { x: 0, y: 0, z: 0 }
 } 

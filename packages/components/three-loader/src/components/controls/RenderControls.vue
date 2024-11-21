@@ -16,6 +16,17 @@
               />
             </div>
             <div class="render-option">
+              <span>网格颜色</span>
+              <el-color-picker
+                v-model="gridColor"
+                show-alpha
+                size="small"
+                :predefine="predefineColors"
+                @change="handleGridColorChange"
+                :disabled="!showGrid"
+              />
+            </div>
+            <div class="render-option">
               <el-tooltip
                 content="X轴-红色 | Y轴-绿色 | Z轴-蓝色"
                 placement="top"
@@ -138,26 +149,21 @@ import { InfoFilled, Monitor, Position, Refresh } from '@element-plus/icons-vue'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 import { defaultHelperConfig } from '../../config/helperConfig'
+import { defaultPredefineColors } from '../../config/colorConfig'  // 导入预设颜色
 
 // 使用 defaultHelperConfig 的初始值
 const showGrid = ref(defaultHelperConfig.showGrid)
+const gridColor = ref(defaultHelperConfig.gridColor)
 const showAxes = ref(defaultHelperConfig.showAxes)
 const showStats = ref(defaultHelperConfig.showStats)
 const showFloor = ref(defaultHelperConfig.showFloor)
-const floorColor = ref(defaultHelperConfig.floorColor?.toString())
+const floorColor = ref(defaultHelperConfig.floorColor)
 const backgroundColor = ref('#f0f2f5')
 
 const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
 
-// 预设颜色
-const predefineColors = ref([
-  '#cccccc',  // 默认灰色
-  '#ffffff',  // 白色
-  '#f5f5f5',  // 浅灰色
-  '#e0e0e0',  // 中灰色
-  '#d3d3d3',  // 亮灰色
-  '#a9a9a9'   // 深灰色
-])
+// 使用预设颜色
+const predefineColors = ref(defaultPredefineColors)
 
 const handleFloorColorChange = (color: string) => {
   if (showFloor.value) {
@@ -169,12 +175,14 @@ const handleBackgroundColorChange = (color: string) => {
   sceneEvents?.updateBackgroundColor(color)
 }
 
+const handleGridColorChange = (color: string) => {
+  if (showGrid.value) {
+    sceneEvents?.updateGridColor(color)
+  }
+}
+
 // 模型位置状态
-const position = reactive({
-  x: 0,
-  y: 0,
-  z: 0
-})
+const position = reactive({ ...defaultHelperConfig.modelPosition })
 
 // 更新位置
 const updatePosition = () => {
@@ -183,9 +191,10 @@ const updatePosition = () => {
 
 // 重置位置
 const resetPosition = () => {
-  position.x = 0
-  position.y = 0
-  position.z = 0
+  const { x = 0, y = 0, z = 0 } = defaultHelperConfig.modelPosition
+  position.x = x
+  position.y = y
+  position.z = z
   updatePosition()
 }
 </script>
@@ -213,7 +222,6 @@ const resetPosition = () => {
     span {
       font-size: 13px;
       color: var(--el-text-color-regular);
-      min-width: 70px;
     }
 
     .position-control {
@@ -227,7 +235,7 @@ const resetPosition = () => {
       }
 
       .position-value {
-        min-width: 40px;
+        min-width: 20px;
         text-align: right;
         font-family: monospace;
         font-size: 13px;
