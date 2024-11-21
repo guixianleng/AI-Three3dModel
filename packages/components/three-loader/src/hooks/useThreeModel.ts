@@ -8,7 +8,6 @@ import {
 } from '../utils/modelUtils'
 import type { ModelLoadResult } from '../types/animation'
 import type { IPosition } from '../types/positions'
-import { modelLoadConfig } from '../config/modelConfig'
 
 /**
  * Three.js 模型管理 Hook
@@ -62,23 +61,11 @@ export function useThreeModel(options: LoaderOptions = {}) {
       mixer.value = newMixer
       animations.value = newAnimations
 
-      const { position, scale, rotation } = modelLoadConfig
-
-      // 设置默认位置和缩放
-      object.position.set(
-        position.x,
-        position.y,
-        position.z
-      )
-      object.scale.setScalar(scale)
-      object.rotation.set(
-        rotation.x,
-        rotation.y,
-        rotation.z
-      )
-
       loading.value = false
-      console.log('模型加载完成')
+      console.log('模型加载完成', {
+        animations: newAnimations.length,
+        hasMixer: !!newMixer
+      })
 
       return {
         model: object as THREE.Group,

@@ -103,175 +103,103 @@ export function getLoaderByFileType(fileType: ModelFileType, options: LoaderOpti
 }
 
 /**
+ * 计算模型合适的缩放比例
+ */
+function computeModelScale(object: THREE.Object3D): number {
+  // 计算包围盒
+  const box = new THREE.Box3().setFromObject(object)
+  const size = box.getSize(new THREE.Vector3())
+  
+  // 获取模型的最大尺寸
+  const maxSize = Math.max(size.x, size.y, size.z)
+  
+  // 根据最大尺寸计算合适的缩放比例
+  // 假设我们希望模型的最大尺寸为100单位
+  const targetSize = 100
+  const scale = targetSize / maxSize
+  
+  return scale
+}
+
+/**
  * 处理模型材质
- * @param object - THREE.Object3D 实例
- * @param options - 材质处理选项
  */
-export function processModelMaterials(object: THREE.Object3D, options: TextureOptions = {}) {
-  const { textureCompression = false, optimizeGeometry = false } = options
+function processModelMaterials(object: any): THREE.Group {
+  let model: THREE.Group
 
-  object.traverse((child) => {
-    if (child instanceof THREE.Mesh) {
-      // 处理材质
-      if (child.material) {
-        const materials = Array.isArray(child.material) ? child.material : [child.material]
-        materials.forEach(mat => {
-          // 创建新的 MeshPhongMaterial
-          const newMat = new THREE.MeshPhongMaterial({
-            color: mat.color || 0xffffff,
-            map: textureCompression ? compressTexture(mat.map) : mat.map,
-            normalMap: textureCompression ? compressTexture(mat.normalMap) : mat.normalMap,
-            aoMap: textureCompression ? compressTexture(mat.aoMap) : mat.aoMap,
-            aoMapIntensity: 1.0,
-            emissive: mat.emissive || 0x000000,
-            emissiveMap: textureCompression ? compressTexture(mat.emissiveMap) : mat.emissiveMap,
-            emissiveIntensity: 1.0,
-            specular: 0x444444,
-            shininess: 30,
-            reflectivity: 1,
-            side: THREE.DoubleSide,
-            transparent: mat.transparent || false,
-            opacity: mat.opacity !== undefined ? mat.opacity : 1.0
-          })
-
-          // 确保材质更新
-          newMat.needsUpdate = true
-
-          // 应用新材质
-          if (!Array.isArray(child.material)) {
-            child.material = newMat
-          }
-        })
-      }
-
-      // 设置阴影
-      child.castShadow = true
-      child.receiveShadow = true
-
-      // 优化几何体
-      if (optimizeGeometry && child.geometry) {
-        optimizeGeometryBuffers(child.geometry)
-      }
+  // 处理 GLTF/GLB 模型
+  if (object.scene && object.scene instanceof THREE.Group) {
+    model = object.scene
+    if (object.animations?.length > 0) {
+      model.animations = object.animations
     }
-  })
-}
-
-/**
- * 压缩纹理
- * @param texture - THREE.Texture 实例
- * @returns 压缩后的纹理
- */
-function compressTexture(texture: THREE.Texture | null): THREE.Texture | null {
-  if (!texture) return null
-
-  try {
-    // 设置纹理压缩格式
-    texture.format = THREE.RGBAFormat
-    texture.type = THREE.UnsignedByteType
-    
-    // 设置纹理过滤
-    texture.minFilter = THREE.LinearMipmapLinearFilter
-    texture.magFilter = THREE.LinearFilter
-    
-    // 启用各向异性过滤
-    const maxAnisotropy = THREE.WebGLRenderer ? THREE.WebGLRenderer.capabilities?.getMaxAnisotropy() : 1
-    if (maxAnisotropy) {
-      texture.anisotropy = maxAnisotropy
-    }
-
-    // 生成 mipmap
-    texture.generateMipmaps = true
-    texture.needsUpdate = true
-
-    return texture
-  } catch (error) {
-    console.error('压缩纹理失败:', error)
-    return texture
+  } 
+  // 处理 FBX 或其他返回 Group 的模型
+  else if (object instanceof THREE.Group) {
+    model = object
   }
-}
-
-/**
- * 优化几何体缓冲区
- * @param geometry - THREE.BufferGeometry 实例
- */
-function optimizeGeometryBuffers(geometry: THREE.BufferGeometry): void {
-  try {
-    // 检查是否有必要的属性
-    const hasRequiredAttributes = geometry.attributes.position 
-      && geometry.attributes.normal 
-      && geometry.attributes.uv 
-      && geometry.index;
-
-    // 计算法线
-    if (geometry.attributes.position && !geometry.attributes.normal) {
-      geometry.computeVertexNormals();
+  // 处理几何体
+  else if (object instanceof THREE.BufferGeometry) {
+    model = new THREE.Group()
+    const material = new THREE.MeshStandardMaterial({
+      color: 0xaaaaaa,
+      metalness: 0.5,
+      roughness: 0.5,
+      side: THREE.DoubleSide
+    })
+    const mesh = new THREE.Mesh(object, material)
+    
+    // 优化几何体
+    if (!object.attributes.normal) {
+      object.computeVertexNormals()
+    }
+    if (!object.boundingSphere) {
+      object.computeBoundingSphere()
+    }
+    if (!object.boundingBox) {
+      object.computeBoundingBox()
     }
 
-    // 只在有必要的属性时计算切线
-    if (hasRequiredAttributes) {
-      try {
-        geometry.computeTangents();
-      } catch (error) {
-        console.warn('计算切线失败，跳过此步骤:', error);
-      }
-    }
-
-    // 计算包围盒和包围球
-    if (geometry.attributes.position) {
-      geometry.computeBoundingBox();
-      geometry.computeBoundingSphere();
-    }
-
-    // mergeVertices 在 BufferGeometry 中不可用，需要使用其他方式优化
-    // 可以考虑使用 BufferGeometryUtils
-    /*
-    if (THREE.BufferGeometryUtils && THREE.BufferGeometryUtils.mergeVertices) {
-      geometry = THREE.BufferGeometryUtils.mergeVertices(geometry);
-    }
-    */
-
-    // 居中几何体
-    geometry.center();
-
-    // 标记需要更新
-    if (geometry.attributes.position) {
-      geometry.attributes.position.needsUpdate = true;
-    }
-    if (geometry.attributes.normal) {
-      geometry.attributes.normal.needsUpdate = true;
-    }
-    if (geometry.attributes.uv) {
-      geometry.attributes.uv.needsUpdate = true;
-    }
-
-    console.log('几何体优化完成', {
-      hasPosition: !!geometry.attributes.position,
-      hasNormal: !!geometry.attributes.normal,
-      hasUV: !!geometry.attributes.uv,
-      hasIndex: !!geometry.index
-    });
-  } catch (error) {
-    console.error('优化几何体失败:', error);
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    model.add(mesh)
   }
+  // 处理其他情况
+  else {
+    model = new THREE.Group()
+    model.add(object)
+  }
+  
+  // 计算并设置合适的缩放比例
+  const scale = computeModelScale(model)
+  model.scale.setScalar(scale)
+
+  // 设置阴影
+  if (typeof model.traverse === 'function') {
+    model.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh) {
+        child.castShadow = true
+        child.receiveShadow = true
+      }
+    })
+  }
+
+  return model
 }
 
 /**
- * 加载模型并处理材质
- * @param url - 模型文件的URL
- * @param scene - THREE.Scene 实例
- * @param options - 加载器配置选项
- * @returns Promise<THREE.Object3D> - 加载的模型对象
+ * 加载模型
  */
 export async function loadModel(
   url: string,
   scene: THREE.Scene,
   options: LoaderOptions = {}
-): Promise<THREE.Object3D> {
+): Promise<THREE.Group> {
   const fileType = modelFileType(url)
-  const loader = getLoaderByFileType(fileType, options)
+  const loader = getLoaderByFileType(fileType)
 
   if (!loader) {
-    throw new Error(`无法加载模型，文件类型不支持: ${fileType}`)
+    throw new Error(`不支持的文件类型: ${fileType}`)
   }
 
   return new Promise((resolve, reject) => {
@@ -279,25 +207,17 @@ export async function loadModel(
       url,
       (object) => {
         try {
-          processModelMaterials(object, {
-            textureCompression: options.textureCompression,
-            optimizeGeometry: options.optimizeGeometry
-          })
-          console.log(`模型加载成功: ${url}`)
-          resolve(object)
+          const model = processModelMaterials(object)
+          scene.add(model)
+          resolve(model)
         } catch (error) {
           console.error('处理模型失败:', error)
           reject(error)
         }
       },
-      (event) => {
-        // 处理加载进度
-        if (options.onProgress) {
-          options.onProgress(event)
-        }
-      },
+      options.onProgress,
       (error) => {
-        console.error(`模型加载失败: ${error}`)
+        console.error('加载模型失败:', error)
         reject(error)
       }
     )

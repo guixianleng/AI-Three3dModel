@@ -20,7 +20,6 @@ export interface SceneEvents {
   toggleFloor: (show: boolean) => void
   updateFloorColor: (color: string) => void
   updateBackgroundColor: (color: string) => void
-  scaleChange: (value: number) => void
   lightChange: (lightType: string, property: string, value: any) => void
   updateModelPosition: (position: IPosition) => void
   updateGridColor: (color: string) => void

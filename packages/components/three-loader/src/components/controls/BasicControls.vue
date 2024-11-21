@@ -1,30 +1,5 @@
 <template>
   <div class="control-sections">
-    <!-- 缩放控制 -->
-    <div class="control-section">
-      <div class="section-header">
-        <el-icon><ZoomIn /></el-icon>
-        <span>模型缩放</span>
-      </div>
-      <div class="section-content">
-        <div class="control-item">
-          <div class="control-content render-controls">
-            <div class="render-option">
-              <span>缩放比例</span>
-              <el-slider
-                v-model="localScale"
-                :min="0.1"
-                :max="2"
-                :step="0.1"
-                style="width: 140px"
-                @change="handleScaleChange"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- 背景控制 -->
     <div class="control-section">
       <div class="section-header">
@@ -167,11 +142,6 @@ const backgroundImage = ref(defaultHelperConfig.backgroundImage)
 watch(() => props.scale, (newScale) => {
   localScale.value = newScale
 })
-
-// 处理缩放变化
-const handleScaleChange = (value: number) => {
-  sceneEvents?.scaleChange(value)
-}
 
 // 处理背景颜色变化
 const handleBackgroundColorChange = (color: string) => {

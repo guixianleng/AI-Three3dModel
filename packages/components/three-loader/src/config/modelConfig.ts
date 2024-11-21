@@ -6,7 +6,7 @@ import { defaultHelperConfig } from './helperConfig'
  * 默认模型配置
  */
 export const defaultModelConfig: IModelControls = {
-  scale: 0.5,
+  scale: 1,
   isPlaying: false,
   wireframe: false,
   lights: defaultLightConfig,
@@ -17,7 +17,7 @@ export const defaultModelConfig: IModelControls = {
  * 模型加载配置
  */
 export const modelLoadConfig = {
-  scale: 0.5,
+  scale: defaultModelConfig.scale,
   position: defaultHelperConfig.modelPosition,
   rotation: {
     x: 0,
