@@ -20,12 +20,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, provide } from 'vue'
-import * as THREE from 'three'
+import { onMounted, onBeforeUnmount, provide } from 'vue'
 
 // Hooks
 import { useThreeScene } from './hooks/useThreeScene'
-import { useFBXModel } from './hooks/useFBXModel'
+import { useThreeModel } from './hooks/useThreeModel'
 import { useModelAnimation } from './hooks/useModelAnimation'
 
 // 组件
@@ -33,7 +32,6 @@ import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
 
 // 类型和配置
-import type { IModelControls } from './types'
 import { defaultLightConfig } from './config/lightConfig'
 import { defaultHelperConfig } from './config/helperConfig'
 import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
@@ -50,9 +48,9 @@ const {
   toggleFloor,
   updateFloorColor,
   setBackgroundColor,
-  updateLight
+  updateLight,
+  updateBackground
 } = useThreeScene({
-  backgroundColor: 0xf0f2f5,
   lights: defaultLightConfig,
   helper: defaultHelperConfig
 })
@@ -61,8 +59,18 @@ const {
 const {
   loading,
   loadingProgress,
-  loadModel
-} = useFBXModel()
+  mixer,
+  animations,
+  loadModel,
+  updatePosition,
+  updateRotation,
+  updateScale,
+  dispose: disposeModel
+} = useThreeModel({
+  useDraco: true,
+  textureCompression: false,
+  optimizeGeometry: false
+})
 
 // 动画管理
 const {
@@ -72,11 +80,6 @@ const {
   resetAnimation,
   updateAnimation
 } = useModelAnimation()
-
-// 模型引用
-const modelRef = ref<THREE.Group | null>(null)
-let mixer: THREE.AnimationMixer
-let animations: THREE.AnimationAction[] = []
 
 /**
  * 初始化模型
@@ -89,18 +92,13 @@ const initModel = async () => {
     if (scene.value) {
       console.log('场景初始化成功，开始加载模型...')
       const modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
-      const result = await loadModel(modelUrl, scene.value)
-      console.log('模型加载成功')
-      
-      modelRef.value = result.model
-      mixer = result.mixer
-      animations = result.animations
+      await loadModel(modelUrl, scene.value)
 
       // 添加动画更新循环
       const animateLoop = () => {
         requestAnimationFrame(animateLoop)
-        if (mixer) {
-          updateAnimation(mixer)
+        if (mixer.value) {
+          updateAnimation(mixer.value)
         }
       }
       animateLoop()
@@ -120,90 +118,41 @@ const takeScreenshot = () => {
   link.click()
 }
 
-// 事件处理函数
-const handleStartAnimation = () => {
-  if (mixer && animations.length) {
-    startAnimation(mixer, animations)
-  }
-}
-
-const handlePauseAnimation = () => {
-  if (mixer) {
-    pauseAnimation(mixer)
-  }
-}
-
-const handleResetAnimation = () => {
-  if (mixer) {
-    resetAnimation(mixer)
-  }
-}
-
-const handleScaleChange = (scale: number) => {
-  if (modelRef.value) {
-    modelRef.value.scale.setScalar(scale)
-  }
-}
-
-const handleLightChange = (lightType: string, property: string, value: any) => {
-  try {
-    // 更新控制状态
-    if (lightType in modelControls.lights) {
-      const light = modelControls.lights[lightType]
-      if (property.includes('.')) {
-        const [prop, subProp] = property.split('.')
-        light[prop][subProp] = value
-      } else {
-        light[property] = value
-      }
-
-      // 更新场景中的光源
-      updateLight(lightType, light)
-      console.log(`光源 ${lightType} 已更新:`, { property, value })
-    }
-  } catch (error) {
-    console.error('更新光源失败:', error)
-  }
-}
-
-const handleUpdateModelPosition = (position: { x: number, y: number, z: number }) => {
-  if (modelRef.value) {
-    modelRef.value.position.set(position.x, position.y, position.z)
-  }
-}
-
-const handleUpdateGridColor = (color: string) => {
-  if (scene.value) {
-    const gridHelper = scene.value.getObjectByName('GridHelper') as THREE.GridHelper
-    if (gridHelper) {
-      (gridHelper.material as THREE.Material).color.set(color)
-      console.log('网格颜色已更新:', color)
-    }
-  }
-}
-
 // 提供场景事件
 provide<SceneEvents>(SCENE_EVENTS_KEY, {
   resetView,
   takeScreenshot,
-  startAnimation: handleStartAnimation,
-  pauseAnimation: handlePauseAnimation,
-  resetAnimation: handleResetAnimation,
+  startAnimation: () => startAnimation(mixer.value!, animations.value),
+  pauseAnimation: () => pauseAnimation(mixer.value!),
+  resetAnimation: () => resetAnimation(mixer.value!),
   toggleGrid,
   toggleStats,
   toggleAxes,
   toggleFloor,
   updateFloorColor,
   updateBackgroundColor: setBackgroundColor,
-  scaleChange: handleScaleChange,
-  lightChange: handleLightChange,
-  updateModelPosition: handleUpdateModelPosition,
-  updateGridColor: handleUpdateGridColor
+  scaleChange: updateScale,
+  lightChange: updateLight,
+  updateModelPosition: updatePosition,
+  updateModelRotation: updateRotation,
+  updateGridColor: (color: string) => {
+    if (scene.value) {
+      const gridHelper = scene.value.getObjectByName('GridHelper') as THREE.GridHelper
+      if (gridHelper) {
+        (gridHelper.material as THREE.Material).color.set(color)
+      }
+    }
+  }
 })
 
-// 初始化
+// 生命周期钩子
 onMounted(() => {
   initModel()
+})
+
+onBeforeUnmount(() => {
+  // 清理模型资源
+  disposeModel()
 })
 </script>
 

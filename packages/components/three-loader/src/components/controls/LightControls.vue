@@ -257,9 +257,24 @@ const predefineColors = ref([
   '#b643cd'   // 紫色
 ])
 
-// 处理光源变化
+/**
+ * 处理光源变化
+ */
 const handleLightChange = (lightType: string, property: string, value: any) => {
-  sceneEvents?.lightChange(lightType, property, value)
+  try {
+    // 构建完整的光源配置对象
+    const lightConfig = {
+      ...props.lights[lightType],  // 使用 props 中的 lights
+      [property]: value  // 更新指定属性
+    }
+
+    // 调用更新函数
+    sceneEvents?.lightChange(lightType, lightConfig)
+    
+    console.log(`光源 ${lightType} 属性更新:`, { property, value })
+  } catch (error) {
+    console.error('更新光源属性失败:', error)
+  }
 }
 
 // 更新光源位置
@@ -294,72 +309,44 @@ const updatePointLightPosition = () => {
 </script>
 
 <style lang="scss" scoped>
-.control-sections {
-  height: calc(100vh - 260px);
-  overflow: auto;
-  padding: 5px;
-  .control-section {
-    background: var(--el-fill-color-light);
-    border-radius: 8px;
-    padding: 6px 20px 1px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+@use './style.scss';
 
-    &:last-child {
-      margin-bottom: 0;
-    }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--el-text-color-primary);
 
-    .section-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      font-weight: bold;
-      font-size: 15px;
-      color: var(--el-text-color-primary);
-
-      .switch-inline {
-        margin-left: auto;
-      }
-    }
-
-    .control-item {
-      border-radius: 6px;
-      padding-bottom: 20px;
-      
-      .control-content {
-        .control-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-          font-size: 14px;
-          color: var(--el-text-color-regular);
-
-          &:last-child {
-            margin-bottom: 0;
-          }
-
-          // 调整滑块和选择器的宽度
-          .el-slider, .el-select {
-            width: 140px;
-          }
-        }
-      }
-    }
+  .switch-inline {
+    margin-left: auto;
   }
 }
 
-// 调整滑块样式
-:deep(.el-slider) {
-  --el-slider-button-size: 16px;
-  --el-slider-height: 4px;
-}
+.control-item {
+  border-radius: 6px;
+  padding-bottom: 20px;
+  
+  .control-content {
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--el-text-color-regular);
 
-// 调整选择器样式
-:deep(.el-select) {
-  .el-input__wrapper {
-    padding: 0 8px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      // 调整滑块和选择器的宽度
+      .el-slider, .el-select {
+        width: 140px;
+      }
+    }
   }
 }
 </style>

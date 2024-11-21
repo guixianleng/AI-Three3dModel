@@ -40,15 +40,15 @@
         <!-- 控制模块切换 -->
         <div class="module-selector">
           <el-radio-group v-model="activeModule" size="small">
-            <el-radio-button label="basic">
+            <el-radio-button value="basic">
               <el-icon><Tools /></el-icon>
               基础控制
             </el-radio-button>
-            <el-radio-button label="render">
+            <el-radio-button value="render">
               <el-icon><Monitor /></el-icon>
               渲染设置
             </el-radio-button>
-            <el-radio-button label="lights">
+            <el-radio-button value="lights">
               <el-icon><Sunny /></el-icon>
               光源设置
             </el-radio-button>

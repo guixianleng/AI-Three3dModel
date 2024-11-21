@@ -1,3 +1,11 @@
+import type { IPosition } from '../types/positions'
+import { BackgroundType } from '../config/helperConfig'
+
+interface BackgroundUpdate {
+  type: BackgroundType
+  value: string
+}
+
 export const SCENE_EVENTS_KEY = Symbol('sceneEvents')
 
 export interface SceneEvents {
@@ -14,6 +22,8 @@ export interface SceneEvents {
   updateBackgroundColor: (color: string) => void
   scaleChange: (value: number) => void
   lightChange: (lightType: string, property: string, value: any) => void
-  updateModelPosition: (position: { x: number, y: number, z: number }) => void
+  updateModelPosition: (position: IPosition) => void
   updateGridColor: (color: string) => void
+  updateModelRotation: (rotation: IPosition) => void
+  updateBackground: (background: BackgroundUpdate) => void
 } 

@@ -1,0 +1,111 @@
+.control-sections {
+  height: calc(100vh - 260px);
+  overflow-y: auto;
+  .control-section {
+    background: var(--el-fill-color-blank);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 0 4px;
+
+      .el-icon {
+        font-size: 16px;
+        color: var(--el-text-color-primary);
+      }
+
+      span {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--el-text-color-primary);
+      }
+
+      .reset-link {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--el-color-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          opacity: 0.8;
+        }
+
+        .el-icon {
+          font-size: 14px;
+          color: var(--el-color-primary);
+        }
+
+        span {
+          font-size: 12px;
+          font-weight: normal;
+          color: var(--el-color-primary);
+        }
+      }
+    }
+
+    .render-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 12px 16px;
+      background: var(--el-fill-color-light);
+      border-radius: 8px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: var(--el-fill-color);
+      }
+
+      .render-option {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+
+        span {
+          font-size: 13px;
+          color: var(--el-text-color-regular);
+        }
+
+        .position-control {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          .el-slider {
+            flex: 1;
+          }
+
+          .position-value {
+            min-width: 40px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 13px;
+            color: var(--el-text-color-secondary);
+          }
+        }
+      }
+    }
+  }
+}
+
+// 调整滑块样式
+:deep(.el-slider) {
+  --el-slider-button-size: 16px;
+  --el-slider-height: 4px;
+} 

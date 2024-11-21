@@ -7,7 +7,7 @@ import { useThreeHelper } from './useThreeHelper'
 
 import type { ISceneOptions } from '../types/scene'
 import { defaultLightConfig } from '../config/lightConfig'
-import { defaultHelperConfig } from '../config/helperConfig'
+import { defaultHelperConfig, BackgroundType } from '../config/helperConfig'
 
 export const LIGHTS_KEY = Symbol('lights')
 
@@ -15,9 +15,7 @@ export const LIGHTS_KEY = Symbol('lights')
  * Three.js 场景管理 Hook
  */
 export function useThreeScene(options: ISceneOptions = {}) {
-  // 解构配置选项并设置默认值
   const {
-    backgroundColor = 0xf0f2f5,
     camera: cameraOptions,
     lights: lightConfig = defaultLightConfig,
     controls: controlsOptions,
@@ -97,9 +95,8 @@ export function useThreeScene(options: ISceneOptions = {}) {
           }
 
           // 创建场景
-          const newScene = new THREE.Scene()
-          newScene.background = new THREE.Color(backgroundColor)
-          scene.value = newScene
+          scene.value = new THREE.Scene()
+          scene.value.background = new THREE.Color(helperOptions.backgroundColor)
 
           // 创建相机
           const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
@@ -117,11 +114,11 @@ export function useThreeScene(options: ISceneOptions = {}) {
           if (!newControls) throw new Error('控制器创建失败')
 
           // 添加光源
-          const lights = addLightsToScene(newScene, lightConfig)
+          const lights = addLightsToScene(scene.value, lightConfig)
           if (!lights) throw new Error('光源初始化失败')
 
           // 添加辅助工具
-          createFloor(newScene)
+          createFloor(scene.value)
           createStats(threeContainer.value)
 
           // 开始渲染循环
@@ -129,14 +126,14 @@ export function useThreeScene(options: ISceneOptions = {}) {
             requestAnimationFrame(renderLoop)
             updateControls()
             updateStats()
-            if (newScene && newCamera) {
-              renderer.render(newScene, newCamera)
+            if (scene.value && newCamera) {
+              renderer.render(scene.value, newCamera)
             }
           }
           renderLoop()
 
           console.log('场景初始化完成')
-          resolve(newScene)
+          resolve(scene.value)
         } catch (error) {
           console.error('场景初始化失败:', error)
           reject(error)
@@ -232,6 +229,69 @@ export function useThreeScene(options: ISceneOptions = {}) {
     }
   }
 
+  /**
+   * 更新场景背景
+   */
+  const updateBackground = async ({ type, value }: { type: BackgroundType; value: string }) => {
+    if (!scene.value || !renderer) return
+
+    try {
+      if (type === BackgroundType.Color) {
+        scene.value.background = new THREE.Color(value)
+      } else {
+        // 加载纹理
+        const textureLoader = new THREE.TextureLoader()
+        
+        // 确保使用完整的URL，避免缓存问题
+        const imageUrl = new URL(value).toString()
+        
+        const texture = await new Promise<THREE.Texture>((resolve, reject) => {
+          textureLoader.load(
+            imageUrl,
+            (loadedTexture) => {
+              loadedTexture.colorSpace = THREE.SRGBColorSpace
+              loadedTexture.minFilter = THREE.LinearFilter
+              loadedTexture.magFilter = THREE.LinearFilter
+              loadedTexture.needsUpdate = true
+              resolve(loadedTexture)
+            },
+            (progress) => {
+              console.log('背景纹理加载进度:', (progress.loaded / progress.total * 100).toFixed(1) + '%')
+            },
+            (error) => {
+              console.error('背景纹理加载失败:', error)
+              reject(error)
+            }
+          )
+        })
+
+        // 清除旧的背景纹理
+        if (scene.value.background instanceof THREE.Texture) {
+          scene.value.background.dispose()
+        }
+
+        // 设置新的背景纹理
+        scene.value.background = texture
+
+        // 强制渲染器更新
+        renderer.setSize(
+          renderer.domElement.clientWidth,
+          renderer.domElement.clientHeight,
+          false
+        )
+      }
+
+      // 强制重新渲染一帧
+      if (camera.value) {
+        renderer.render(scene.value, camera.value)
+      }
+
+      console.log('背景更新成功:', { type, value })
+    } catch (error) {
+      console.error('更新场景背景失败:', error)
+    }
+  }
+
   // 生命周期钩子
   onMounted(() => window.addEventListener('resize', handleResize))
   onBeforeUnmount(() => dispose())
@@ -244,12 +304,12 @@ export function useThreeScene(options: ISceneOptions = {}) {
     renderer,
     initScene,
     resetView,
-    toggleGrid: (show: boolean) => toggleGrid(scene.value, show),
-    toggleStats: (show: boolean) => toggleStats(threeContainer.value, show),
-    toggleAxes: (show: boolean) => toggleAxes(scene.value, show),
-    toggleFloor: (show: boolean) => toggleFloor(scene.value, show),
+    toggleGrid,
+    toggleStats,
+    toggleAxes,
+    toggleFloor,
     updateFloorColor,
-    setBackgroundColor,
+    updateBackground,
     updateLight
   }
 } 

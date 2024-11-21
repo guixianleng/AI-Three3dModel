@@ -59,11 +59,7 @@ export interface AmbientLightConfig extends BaseLightConfig {
  */
 export interface DirectionalLightConfig extends BaseLightConfig {
   /** 光源位置 */
-  position: {
-    x: number
-    y: number
-    z: number
-  }
+  position: IPosition
   /** 阴影配置 */
   shadow: ShadowConfig
 }
@@ -73,11 +69,7 @@ export interface DirectionalLightConfig extends BaseLightConfig {
  */
 export interface PointLightConfig extends BaseLightConfig {
   /** 光源位置 */
-  position: {
-    x: number
-    y: number
-    z: number
-  }
+  position: IPosition
   /** 照射距离 */
   distance: number
   /** 衰减系数 */
@@ -91,17 +83,9 @@ export interface PointLightConfig extends BaseLightConfig {
  */
 export interface SpotLightConfig extends BaseLightConfig {
   /** 光源位置 */
-  position: {
-    x: number
-    y: number
-    z: number
-  }
+  position: IPosition
   /** 目标点位置 */
-  target: {
-    x: number
-    y: number
-    z: number
-  }
+  target: IPosition
   /** 光照角度 */
   angle: number
   /** 边缘柔和度 */
@@ -119,11 +103,30 @@ export interface SpotLightConfig extends BaseLightConfig {
  */
 export interface SceneLightsConfig {
   /** 环境光配置 */
-  ambient: AmbientLightConfig
+  ambient: LightConfig
   /** 平行光配置 */
-  directional: DirectionalLightConfig
+  directional: LightConfig
   /** 点光源配置 */
-  point: PointLightConfig
+  point: LightConfig
   /** 聚光灯配置 */
-  spot: SpotLightConfig
+  spot: LightConfig
+}
+
+/**
+ * 光源配置接口
+ */
+export interface LightConfig {
+  enabled: boolean
+  intensity: number
+  color: string
+  position?: {
+    x: number
+    y: number
+    z: number
+  }
+  shadow?: {
+    enabled: boolean
+    mapSize: number
+    bias: number
+  }
 } 

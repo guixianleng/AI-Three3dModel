@@ -50,7 +50,6 @@ const startTextChange = () => {
     const texts = props.texts || defaultTexts
     currentIndex = (currentIndex + 1) % texts.length
     currentText.value = texts[currentIndex]
-    console.log('切换加载文本:', currentText.value) // 添加日志
   }, props.textChangeInterval || 2000)
 }
 

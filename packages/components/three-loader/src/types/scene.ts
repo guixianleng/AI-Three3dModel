@@ -1,6 +1,8 @@
 import type { ICameraOptions } from './camera'
 import type { IControlsOptions } from './controls'
 import type { SceneLightsConfig } from './lights'
+import type { IPosition } from './positions'
+import { BackgroundType } from '../config/helperConfig'
 
 /**
  * 场景配置选项接口
@@ -41,5 +43,9 @@ export interface IHelperOptions {
   /** 地板颜色 */
   floorColor?: string
   /** 模型位置 */
-  modelPosition?: { x: number, y: number, z: number }
+  modelPosition?: IPosition
+  /** 背景颜色 */
+  backgroundColor?: string
+  backgroundType?: BackgroundType
+  backgroundImage?: string
 }
