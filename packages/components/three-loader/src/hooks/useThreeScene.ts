@@ -304,11 +304,12 @@ export function useThreeScene(options: ISceneOptions = {}) {
     renderer,
     initScene,
     resetView,
-    toggleGrid,
-    toggleStats,
-    toggleAxes,
-    toggleFloor,
+    toggleGrid: (show: boolean) => toggleGrid(scene.value, show),
+    toggleStats: (show: boolean) => toggleStats(threeContainer.value, show),
+    toggleAxes: (show: boolean) => toggleAxes(scene.value, show),
+    toggleFloor: (show: boolean) => toggleFloor(scene.value, show),
     updateFloorColor,
+    setBackgroundColor,
     updateBackground,
     updateLight
   }

@@ -130,6 +130,7 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   toggleAxes,
   toggleFloor,
   updateFloorColor,
+  updateBackground,
   updateBackgroundColor: setBackgroundColor,
   scaleChange: updateScale,
   lightChange: updateLight,
