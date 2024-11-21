@@ -149,6 +149,17 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
   }
 
   /**
+   * 更新网格颜色
+   */
+  const updateGridColor = (scene: THREE.Scene, color: string) => {
+    if (!scene || !gridHelper.value) {
+      console.warn('更改网格颜色失败: 场景或网格未初始化')
+      return
+    }
+    gridHelper.value.material.color.set(color)
+  }
+
+  /**
    * 切换坐标轴显示状态
    */
   const toggleAxes = (scene: THREE.Scene, show: boolean) => {
@@ -271,6 +282,7 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
     createFloor,
     createStats,
     toggleGrid,
+    updateGridColor,
     toggleStats,
     toggleAxes,
     toggleFloor,

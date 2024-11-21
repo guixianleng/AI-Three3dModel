@@ -4,6 +4,8 @@ import { useThreeLights } from './useThreeLights'
 import { useThreeCamera } from './useThreeCamera'
 import { useThreeControls } from './useThreeControls'
 import { useThreeHelper } from './useThreeHelper'
+import { useThreeModel } from './useThreeModel'
+import { useModelAnimation } from './useModelAnimation'
 
 import type { ISceneOptions } from '../types/scene'
 import { defaultLightConfig } from '../config/lightConfig'
@@ -51,6 +53,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
     createFloor,
     createStats,
     toggleGrid,
+    updateGridColor,
     toggleStats,
     toggleAxes,
     toggleFloor,
@@ -58,6 +61,33 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updateFloorColor,
     dispose: disposeHelper
   } = useThreeHelper(helperOptions)
+
+  // 加载模型管理
+  const {
+    mixer,
+    animations,
+    model,
+    loadModel,
+    loading,
+    loadingProgress,
+    dispose: disposeModel,
+    updatePosition,
+    updateScale,
+    updateRotation,
+    updateMaterials
+  } = useThreeModel()
+
+  // 动画管理
+  const {
+    modelControls,
+    startAnimation,
+    pauseAnimation,
+    resetAnimation,
+    updateAnimation
+  } = useModelAnimation()
+
+  // 渲染循环ID
+  let animationFrameId: number | null = null
 
   /**
    * 创建渲染器
@@ -86,60 +116,86 @@ export function useThreeScene(options: ISceneOptions = {}) {
   /**
    * 初始化场景
    */
-  const initScene = async () => {
-    return new Promise<THREE.Scene>((resolve, reject) => {
-      requestAnimationFrame(() => {
-        try {
-          if (!threeContainer.value) {
-            throw new Error('容器元素未找到')
-          }
+  const initScene = async (modelUrl: string = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx',) => {
+    try {
+      console.log('开始初始化场景...')
+      if (!threeContainer.value) {
+        throw new Error('容器元素未找到')
+      }
 
-          // 创建场景
-          scene.value = new THREE.Scene()
-          scene.value.background = new THREE.Color(helperOptions.backgroundColor)
+      // 创建场景
+      scene.value = new THREE.Scene()
+      scene.value.background = new THREE.Color(helperOptions.backgroundColor)
 
-          // 创建相机
-          const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
-          const newCamera = createCamera(aspect)
-          if (!newCamera) throw new Error('相机创建失败')
-          setCamera(newCamera)
+      // 创建相机
+      const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
+      const newCamera = createCamera(aspect)
+      if (!newCamera) throw new Error('相机创建失败')
+      setCamera(newCamera)
 
-          // 创建渲染器
-          const newRenderer = createRenderer(threeContainer.value)
-          if (!newRenderer) throw new Error('渲染器创建失败')
-          renderer = newRenderer
+      // 创建渲染器
+      const newRenderer = createRenderer(threeContainer.value)
+      if (!newRenderer) throw new Error('渲染器创建失败')
+      renderer = newRenderer
 
-          // 创建控制器
-          const newControls = createControls(renderer.domElement)
-          if (!newControls) throw new Error('控制器创建失败')
+      // 创建控制器
+      const newControls = createControls(renderer.domElement)
+      if (!newControls) throw new Error('控制器创建失败')
 
-          // 添加光源
-          const lights = addLightsToScene(scene.value, lightConfig)
-          if (!lights) throw new Error('光源初始化失败')
+      // 添加光源
+      const lights = addLightsToScene(scene.value, lightConfig)
+      if (!lights) throw new Error('光源初始化失败')
 
-          // 添加辅助工具
-          createFloor(scene.value)
-          createStats(threeContainer.value)
+      // 添加辅助工具
+      createFloor(scene.value)
+      createStats(threeContainer.value)
 
-          // 开始渲染循环
-          const renderLoop = () => {
-            requestAnimationFrame(renderLoop)
-            updateControls()
-            updateStats()
-            if (scene.value && newCamera) {
-              renderer.render(scene.value, newCamera)
-            }
-          }
-          renderLoop()
+      const { model } = await loadModel(modelUrl, scene.value)
 
-          console.log('场景初始化完成')
-          resolve(scene.value)
-        } catch (error) {
-          console.error('场景初始化失败:', error)
-          reject(error)
-        }
-      })
-    })
+      scene.value.add(model)
+      startRenderLoop()
+    } catch (error) {
+      stopRenderLoop()
+      loading.value = false
+      console.error('场景初始化失败:', error)
+      throw error
+    }
+  }
+
+  /**
+   * 启动渲染循环
+   */
+  const startRenderLoop = () => {
+    // 如果已经在运行，则不重复启动
+    if (animationFrameId !== null) return
+
+    const animate = () => {
+      animationFrameId = requestAnimationFrame(animate)
+      
+      if (controls.value) {
+        controls.value.update()
+      }
+      
+      updateAnimation(mixer.value)
+      
+      if (scene.value && camera.value) {
+        renderer.render(scene.value, camera.value)
+      }
+      
+      updateStats()
+    }
+
+    animate()
+  }
+
+  /**
+   * 停止渲染循环
+   */
+  const stopRenderLoop = () => {
+    if (animationFrameId !== null) {
+      cancelAnimationFrame(animationFrameId)
+      animationFrameId = null
+    }
   }
 
   /**
@@ -195,6 +251,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
       disposeHelper(threeContainer.value, scene.value)
       disposeCamera()
       disposeControls()
+      disposeModel()
 
       // 清理渲染器
       if (renderer) {
@@ -302,12 +359,26 @@ export function useThreeScene(options: ISceneOptions = {}) {
     camera,
     controls,
     renderer,
+    mixer,
+    animations,
+    model,
+    loading,
+    loadingProgress,
     initScene,
+    modelControls,
     resetView,
+    startAnimation: () => startAnimation(mixer.value, animations.value),
+    pauseAnimation: () => pauseAnimation(mixer.value),
+    resetAnimation: () => resetAnimation(mixer.value),
     toggleGrid: (show: boolean) => toggleGrid(scene.value, show),
+    updateGridColor: (color: string) => updateGridColor(scene.value, color),
     toggleStats: (show: boolean) => toggleStats(threeContainer.value, show),
     toggleAxes: (show: boolean) => toggleAxes(scene.value, show),
     toggleFloor: (show: boolean) => toggleFloor(scene.value, show),
+    updatePosition,
+    updateScale,
+    updateRotation,
+    updateMaterials,
     updateFloorColor,
     setBackgroundColor,
     updateBackground,

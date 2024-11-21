@@ -108,7 +108,7 @@ export function getLoaderByFileType(fileType: ModelFileType, options: LoaderOpti
  * @param options - 材质处理选项
  */
 export function processModelMaterials(object: THREE.Object3D, options: TextureOptions = {}) {
-  const { textureCompression = false, optimizeGeometry = true } = options
+  const { textureCompression = false, optimizeGeometry = false } = options
 
   object.traverse((child) => {
     if (child instanceof THREE.Mesh) {
@@ -283,7 +283,6 @@ export async function loadModel(
             textureCompression: options.textureCompression,
             optimizeGeometry: options.optimizeGeometry
           })
-          scene.add(object)
           console.log(`模型加载成功: ${url}`)
           resolve(object)
         } catch (error) {

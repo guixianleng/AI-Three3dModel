@@ -1,6 +1,5 @@
 <template>
   <div class="three-container">
-    <!-- 加载动画 -->
     <LoadingSpinner 
       v-if="loading"
       :progress="loadingProgress"
@@ -8,10 +7,8 @@
       :text-change-interval="2000"
     />
 
-    <!-- Three.js 渲染容器 -->
     <div ref="threeContainer" class="canvas-container"></div>
     
-    <!-- 模型控制面板 -->
     <ModelControls 
       :model-controls="modelControls"
       class="model-controls"
@@ -20,18 +17,16 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, provide } from 'vue'
+import { onMounted, provide } from 'vue'
 
 // Hooks
 import { useThreeScene } from './hooks/useThreeScene'
-import { useThreeModel } from './hooks/useThreeModel'
-import { useModelAnimation } from './hooks/useModelAnimation'
 
 // 组件
 import LoadingSpinner from './components/LoadingSpinner.vue'
 import ModelControls from './components/ModelControls.vue'
 
-// 类型和配置
+// 配置
 import { defaultLightConfig } from './config/lightConfig'
 import { defaultHelperConfig } from './config/helperConfig'
 import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
@@ -40,69 +35,41 @@ import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
 const {
   threeContainer,
   scene,
-  resetView,
+  loading,
+  loadingProgress,
+  mixer,
+  animations,
+  model,
+  modelControls,
   initScene,
+  resetView,
   toggleGrid,
+  updateGridColor,
   toggleStats,
   toggleAxes,
   toggleFloor,
+  startAnimation,
+  pauseAnimation,
+  resetAnimation,
+  updatePosition,
+  updateScale,
+  updateRotation,
   updateFloorColor,
-  setBackgroundColor,
+  updateBackground,
   updateLight,
-  updateBackground
+  setBackgroundColor,
 } = useThreeScene({
   lights: defaultLightConfig,
   helper: defaultHelperConfig
 })
 
-// 模型管理
-const {
-  loading,
-  loadingProgress,
-  mixer,
-  animations,
-  loadModel,
-  updatePosition,
-  updateRotation,
-  updateScale,
-  dispose: disposeModel
-} = useThreeModel({
-  useDraco: true,
-  textureCompression: false,
-  optimizeGeometry: false
-})
-
-// 动画管理
-const {
-  modelControls,
-  startAnimation,
-  pauseAnimation,
-  resetAnimation,
-  updateAnimation
-} = useModelAnimation()
 
 /**
- * 初始化模型
+ * 初始化场景和模型
  */
 const initModel = async () => {
   try {
-    console.log('开始初始化场景...')
     await initScene()
-    
-    if (scene.value) {
-      console.log('场景初始化成功，开始加载模型...')
-      const modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
-      await loadModel(modelUrl, scene.value)
-
-      // 添加动画更新循环
-      const animateLoop = () => {
-        requestAnimationFrame(animateLoop)
-        if (mixer.value) {
-          updateAnimation(mixer.value)
-        }
-      }
-      animateLoop()
-    }
   } catch (error) {
     console.error('初始化失败:', error)
   }
@@ -122,10 +89,11 @@ const takeScreenshot = () => {
 provide<SceneEvents>(SCENE_EVENTS_KEY, {
   resetView,
   takeScreenshot,
-  startAnimation: () => startAnimation(mixer.value!, animations.value),
-  pauseAnimation: () => pauseAnimation(mixer.value!),
-  resetAnimation: () => resetAnimation(mixer.value!),
+  startAnimation,
+  pauseAnimation,
+  resetAnimation,
   toggleGrid,
+  updateGridColor,
   toggleStats,
   toggleAxes,
   toggleFloor,
@@ -136,24 +104,11 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   lightChange: updateLight,
   updateModelPosition: updatePosition,
   updateModelRotation: updateRotation,
-  updateGridColor: (color: string) => {
-    if (scene.value) {
-      const gridHelper = scene.value.getObjectByName('GridHelper') as THREE.GridHelper
-      if (gridHelper) {
-        (gridHelper.material as THREE.Material).color.set(color)
-      }
-    }
-  }
 })
 
-// 生命周期钩子
+// 初始化
 onMounted(() => {
   initModel()
-})
-
-onBeforeUnmount(() => {
-  // 清理模型资源
-  disposeModel()
 })
 </script>
 

@@ -201,7 +201,6 @@ const refreshRandomImages = async () => {
   try {
     // 清空当前选择
     backgroundImage.value = ''
-    backgroundType.value = BackgroundType.Color
     
     // 生成新的图片列表
     const newImages = generateRandomImages()
