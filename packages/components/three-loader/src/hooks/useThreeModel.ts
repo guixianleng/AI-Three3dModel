@@ -4,7 +4,8 @@ import {
   loadModel, 
   ModelFileType, 
   type LoaderOptions, 
-  type TextureOptions 
+  type TextureOptions, 
+  getModelBounds 
 } from '../utils/modelUtils'
 import type { ModelLoadResult } from '../types/animation'
 import type { IPosition } from '../types/positions'
@@ -37,16 +38,15 @@ export function useThreeModel(options: LoaderOptions = {}) {
       loadingProgress.value = 0
 
       // 加载模型
-      const object = await loadModel(url, scene, {
-        ...options,
-        onProgress: (event: ProgressEvent) => {
-          if (event.lengthComputable) {
-            loadingProgress.value = (event.loaded / event.total) * 100
-            console.log('加载进度:', loadingProgress.value.toFixed(1) + '%')
-          }
-        }
-      })
-
+      const object = await loadModel(url, scene, options)
+      
+      // 确保模型正确放置在地板上
+      const bounds = getModelBounds(object)
+      if (bounds.minY < 0) {
+        // 如果模型最低点低于0，将整个模型向上移动
+        object.position.y -= bounds.minY
+      }
+      
       // 创建动画混合器
       const newMixer = new THREE.AnimationMixer(object)
       

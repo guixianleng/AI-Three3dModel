@@ -8,8 +8,7 @@ import { useThreeModel } from './useThreeModel'
 import { useModelAnimation } from './useModelAnimation'
 
 import type { ISceneOptions } from '../types/scene'
-import { defaultLightConfig } from '../config/lightConfig'
-import { defaultHelperConfig, BackgroundType } from '../config/helperConfig'
+import { defaultModelConfig, BackgroundType } from '../config/modelConfig'
 
 export const LIGHTS_KEY = Symbol('lights')
 
@@ -18,10 +17,10 @@ export const LIGHTS_KEY = Symbol('lights')
  */
 export function useThreeScene(options: ISceneOptions = {}) {
   const {
-    camera: cameraOptions,
-    lights: lightConfig = defaultLightConfig,
-    controls: controlsOptions,
-    helper: helperOptions = defaultHelperConfig
+    camera: cameraOptions = defaultModelConfig.camera,
+    lights: lightConfig = defaultModelConfig.lights,
+    controls: controlsOptions = defaultModelConfig.controls,
+    helper: helperOptions = defaultModelConfig.helperConfig
   } = options
 
   // 场景相关引用
@@ -36,18 +35,18 @@ export function useThreeScene(options: ISceneOptions = {}) {
 
   const { 
     camera, 
-    createCamera, 
+    createCamera,
+    setCamera,
     updateAspect,
     dispose: disposeCamera 
   } = useThreeCamera(cameraOptions)
 
   const { 
     controls,
-    setCamera,
     createControls,
     updateControls,
     dispose: disposeControls
-  } = useThreeControls(undefined, controlsOptions)
+  } = useThreeControls(camera.value, controlsOptions)
 
   const {
     createFloor,
@@ -59,6 +58,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
     toggleFloor,
     updateStats,
     updateFloorColor,
+    updateFloorOpacity,
     dispose: disposeHelper
   } = useThreeHelper(helperOptions)
 
@@ -125,22 +125,35 @@ export function useThreeScene(options: ISceneOptions = {}) {
 
       // 创建场景
       scene.value = new THREE.Scene()
-      scene.value.background = new THREE.Color(helperOptions.backgroundColor)
-
-      // 创建相机
-      const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
-      const newCamera = createCamera(aspect)
-      if (!newCamera) throw new Error('相机创建失败')
-      setCamera(newCamera)
+      // 设置默认背景颜色
+      scene.value.background = new THREE.Color(defaultModelConfig.background.color)
 
       // 创建渲染器
       const newRenderer = createRenderer(threeContainer.value)
       if (!newRenderer) throw new Error('渲染器创建失败')
       renderer = newRenderer
 
-      // 创建控制器
+      // 创建相机
+      const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
+      const newCamera = createCamera(aspect)
+      if (!newCamera) throw new Error('相机创建失败')
+      
+      // 设置相机初始位置
+      const { initial: initialPos, target } = defaultModelConfig.camera.position
+      newCamera.position.set(initialPos.x, initialPos.y, initialPos.z)
+      newCamera.lookAt(target.x, target.y, target.z)
+      setCamera(newCamera)
+
+      // 等待相机设置完成后再创建控制器
+      await Promise.resolve() // 确保相机状态已更新
+
+      // 创建控制器并配置
       const newControls = createControls(renderer.domElement)
       if (!newControls) throw new Error('控制器创建失败')
+      
+      // 应用控制器配置
+      Object.assign(newControls, controlsOptions)
+      newControls.update()
 
       // 添加光源
       const lights = addLightsToScene(scene.value, lightConfig)
@@ -151,7 +164,6 @@ export function useThreeScene(options: ISceneOptions = {}) {
       createStats(threeContainer.value)
 
       const { model } = await loadModel(modelUrl, scene.value)
-
       scene.value.add(model)
       startRenderLoop()
     } catch (error) {
@@ -270,27 +282,10 @@ export function useThreeScene(options: ISceneOptions = {}) {
   }
 
   /**
-   * 设置场景背景颜色
-   */
-  const setBackgroundColor = (color: number | string) => {
-    if (!scene.value) {
-      console.warn('设置背景颜色失败: 场景未初始化')
-      return
-    }
-
-    try {
-      scene.value.background = new THREE.Color(color)
-      console.log('场景背景颜色已更新:', color)
-    } catch (error) {
-      console.error('设置背景颜色失败:', error)
-    }
-  }
-
-  /**
    * 更新场景背景
    */
   const updateBackground = async ({ type, value }: { type: BackgroundType; value: string }) => {
-    if (!scene.value || !renderer) return
+    if (!scene.value) return
 
     try {
       if (type === BackgroundType.Color) {
@@ -327,7 +322,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
           scene.value.background.dispose()
         }
 
-        // 设置新的背景纹理
+        // 设新的背景纹理
         scene.value.background = texture
 
         // 强制渲染器更新
@@ -342,8 +337,6 @@ export function useThreeScene(options: ISceneOptions = {}) {
       if (camera.value) {
         renderer.render(scene.value, camera.value)
       }
-
-      console.log('背景更新成功:', { type, value })
     } catch (error) {
       console.error('更新场景背景失败:', error)
     }
@@ -380,8 +373,8 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updateRotation,
     updateMaterials,
     updateFloorColor,
-    setBackgroundColor,
     updateBackground,
+    updateFloorOpacity,
     updateLight
   }
 } 

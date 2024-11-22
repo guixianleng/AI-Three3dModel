@@ -8,64 +8,56 @@
       <div class="section-content">
         <div class="control-item">
           <div class="control-content render-controls">
-            <div class="render-option">
-              <span>网格辅助线</span>
-              <el-switch
-                v-model="showGrid"
-                @change="sceneEvents?.toggleGrid(showGrid)"
-              />
+            <!-- 网格模块 -->
+            <div class="render-group">
+              <div class="render-option">
+                <span>网格辅助线</span>
+                <el-switch
+                  v-model="gridOptions.show"
+                  @change="sceneEvents?.toggleGrid"
+                />
+              </div>
+              <div class="render-option" v-if="gridOptions.show">
+                <span>网格颜色</span>
+                <el-color-picker
+                  v-model="gridOptions.color"
+                  show-alpha
+                  size="small"
+                  :predefine="predefineColors"
+                  @change="handleGridColorChange"
+                />
+              </div>
             </div>
-            <div class="render-option">
-              <span>网格颜色</span>
-              <el-color-picker
-                v-model="gridColor"
-                show-alpha
-                size="small"
-                :predefine="predefineColors"
-                @change="handleGridColorChange"
-                :disabled="!showGrid"
-              />
+
+            <!-- 坐标轴模块 -->
+            <div class="render-group">
+              <div class="render-option">
+                <el-tooltip
+                  content="X轴-红色 | Y轴-绿色 | Z轴-蓝色"
+                  placement="top"
+                  :show-after="200"
+                >
+                  <div class="axes-label">
+                    <span>坐标轴辅助线</span>
+                    <el-icon class="info-icon"><InfoFilled /></el-icon>
+                  </div>
+                </el-tooltip>
+                <el-switch
+                  v-model="axesOptions.show"
+                  @change="sceneEvents?.toggleAxes"
+                />
+              </div>
             </div>
-            <div class="render-option">
-              <el-tooltip
-                content="X轴-红色 | Y轴-绿色 | Z轴-蓝色"
-                placement="top"
-                :show-after="200"
-              >
-                <div class="axes-label">
-                  <span>坐标轴辅助线</span>
-                  <el-icon class="info-icon"><InfoFilled /></el-icon>
-                </div>
-              </el-tooltip>
-              <el-switch
-                v-model="showAxes"
-                @change="sceneEvents?.toggleAxes(showAxes)"
-              />
-            </div>
-            <div class="render-option">
-              <span>显示地板</span>
-              <el-switch
-                v-model="showFloor"
-                @change="sceneEvents?.toggleFloor(showFloor)"
-              />
-            </div>
-            <div class="render-option">
-              <span>地板颜色</span>
-              <el-color-picker
-                v-model="floorColor"
-                show-alpha
-                size="small"
-                :predefine="predefineColors"
-                @change="handleFloorColorChange"
-                :disabled="!showFloor"
-              />
-            </div>
-            <div class="render-option">
-              <span>性能监控</span>
-              <el-switch
-                v-model="showStats"
-                @change="sceneEvents?.toggleStats(showStats)"
-              />
+
+            <!-- 性能监控模块 -->
+            <div class="render-group">
+              <div class="render-option">
+                <span>性能监控</span>
+                <el-switch
+                  v-model="statsOptions.show"
+                  @change="sceneEvents?.toggleStats"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -193,41 +185,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, inject } from 'vue'
+import { ref, inject, reactive } from 'vue'
 import { InfoFilled, Monitor, Position, Refresh, DCaret } from '@element-plus/icons-vue'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 import { defaultHelperConfig } from '../../config/helperConfig'
 import { defaultPredefineColors } from '../../config/colorConfig'
-import { modelLoadConfig } from '../../config/modelConfig'
+import { defaultModelConfig } from '../../config/modelConfig'
 
-// 使用 defaultHelperConfig 的初始值
-const showGrid = ref(defaultHelperConfig.showGrid)
-const gridColor = ref(defaultHelperConfig.gridColor)
-const showAxes = ref(defaultHelperConfig.showAxes)
-const showStats = ref(defaultHelperConfig.showStats)
-const showFloor = ref(defaultHelperConfig.showFloor)
-const floorColor = ref(defaultHelperConfig.floorColor)
+// 使用 reactive 管理辅助工具配置
+const gridOptions = reactive({ ...defaultHelperConfig.grid })
+const axesOptions = reactive({ ...defaultHelperConfig.axes })
+const statsOptions = reactive({ ...defaultHelperConfig.stats })
 
 const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
 
 // 使用预设颜色
 const predefineColors = ref(defaultPredefineColors)
 
-const handleFloorColorChange = (color: string) => {
-  if (showFloor.value) {
-    sceneEvents?.updateFloorColor(color)
-  }
-}
-
+// 网格颜色控制方法
 const handleGridColorChange = (color: string) => {
-  if (showGrid.value) {
+  if (gridOptions.show) {
     sceneEvents?.updateGridColor(color)
   }
 }
 
 // 模型位置状态
-const position = reactive({ ...defaultHelperConfig.modelPosition })
+const position = reactive({ ...defaultModelConfig.position })
 
 // 更新位置
 const updatePosition = () => {
@@ -236,7 +220,7 @@ const updatePosition = () => {
 
 // 重置位置
 const resetPosition = () => {
-  const { x = 0, y = 0, z = 0 } = defaultHelperConfig.modelPosition
+  const { x, y, z } = defaultModelConfig.position
   position.x = x
   position.y = y
   position.z = z
@@ -244,11 +228,7 @@ const resetPosition = () => {
 }
 
 // 模型旋转状态
-const rotation = reactive({
-  x: modelLoadConfig.rotation.x,
-  y: modelLoadConfig.rotation.y,
-  z: modelLoadConfig.rotation.z
-})
+const rotation = reactive({ ...defaultModelConfig.rotation })
 
 // 更新旋转
 const updateRotation = () => {
@@ -263,13 +243,57 @@ const updateRotation = () => {
 
 // 重置旋转
 const resetRotation = () => {
-  rotation.x = modelLoadConfig.rotation.x
-  rotation.y = modelLoadConfig.rotation.y
-  rotation.z = modelLoadConfig.rotation.z
+  const { x, y, z } = defaultModelConfig.rotation
+  rotation.x = x
+  rotation.y = y
+  rotation.z = z
   updateRotation()
 }
 </script>
 
 <style lang="scss" scoped>
 @use './style.scss';
+
+.render-controls {
+  background: var(--el-fill-color);
+  .render-group {
+    position: relative;
+    padding: 6px;
+    background: var(--el-fill-color-light);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    .render-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+
+      span {
+        color: var(--el-text-color-primary);
+        font-size: 14px;
+      }
+
+      .axes-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .info-icon {
+          color: var(--el-text-color-secondary);
+          font-size: 14px;
+          transition: color 0.3s ease;
+
+          &:hover {
+            color: var(--el-color-primary);
+          }
+        }
+      }
+
+      &.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
 </style> 

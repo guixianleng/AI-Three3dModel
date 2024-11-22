@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import { ref, shallowRef } from 'vue'
+import { shallowRef } from 'vue'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import type { IControlsOptions } from '../types/controls'
 
 /**
  * Three.js 场景控制器管理 Hook
  */
-export function useThreeControls(initialCamera?: THREE.Camera, options: IControlsOptions = {}) {
+export function useThreeControls(camera: THREE.Camera | undefined, options: IControlsOptions = {}) {
   const {
     enableDamping = true,
     dampingFactor = 0.05,
@@ -19,26 +19,18 @@ export function useThreeControls(initialCamera?: THREE.Camera, options: IControl
   } = options
 
   const controls = shallowRef<OrbitControls | null>(null)
-  const camera = ref<THREE.Camera | undefined>(initialCamera)
-
-  /**
-   * 设置相机
-   */
-  const setCamera = (newCamera: THREE.Camera) => {
-    camera.value = newCamera
-  }
 
   /**
    * 创建控制器
    */
   const createControls = (domElement: HTMLElement) => {
-    if (!camera.value) {
+    if (!camera) {
       console.error('相机未初始化，无法创建控制器')
       return null
     }
 
     try {
-      const newControls = new OrbitControls(camera.value, domElement)
+      const newControls = new OrbitControls(camera, domElement)
 
       // 配置控制器
       Object.assign(newControls, {
@@ -81,7 +73,6 @@ export function useThreeControls(initialCamera?: THREE.Camera, options: IControl
 
   return {
     controls,
-    setCamera,
     createControls,
     updateControls,
     dispose

@@ -11,16 +11,16 @@
           <div class="control-content render-controls">
             <div class="render-option">
               <span>背景类型</span>
-              <el-radio-group v-model="backgroundType" size="small">
+              <el-radio-group v-model="backgroundOptions.type" size="small">
                 <el-radio-button :value="BackgroundType.Color">纯色</el-radio-button>
                 <el-radio-button :value="BackgroundType.Image">图片</el-radio-button>
               </el-radio-group>
             </div>
-            <template v-if="backgroundType === BackgroundType.Color">
+            <template v-if="backgroundOptions.type === BackgroundType.Color">
               <div class="render-option">
                 <span>背景颜色</span>
                 <el-color-picker
-                  v-model="backgroundColor"
+                  v-model="backgroundOptions.color"
                   show-alpha
                   size="small"
                   :predefine="predefineColors"
@@ -48,7 +48,7 @@
                     v-for="(image, index) in randomImages" 
                     :key="index"
                     class="image-item"
-                    :class="{ active: image === backgroundImage }"
+                    :class="{ active: image === backgroundOptions.image }"
                     @click="selectBackgroundImage(image)"
                   >
                     <el-image
@@ -106,42 +106,90 @@
         </div>
       </div>
     </div>
+
+    <!-- 地板控制 -->
+    <div class="control-section">
+      <div class="section-header">
+        <el-icon><Grid /></el-icon>
+        <span>地板控制</span>
+      </div>
+      <div class="section-content">
+        <div class="control-item">
+          <div class="control-content render-controls">
+            <div class="render-group">
+              <div class="render-option">
+                <span>显示地板</span>
+                <el-switch
+                  v-model="floorOptions.show"
+                  @change="sceneEvents?.toggleFloor"
+                />
+              </div>
+              <template v-if="floorOptions.show">
+                <div class="render-option">
+                  <span>颜色</span>
+                  <el-color-picker
+                    v-model="floorOptions.color"
+                    show-alpha
+                    size="small"
+                    :predefine="predefineColors"
+                    @change="handleFloorColorChange"
+                  />
+                </div>
+                <div class="render-option">
+                  <span>透明度</span>
+                  <div class="opacity-control">
+                    <el-slider
+                      v-model="floorOptions.opacity"
+                      :min="0"
+                      :max="1"
+                      :step="0.1"
+                      @change="handleFloorOpacityChange"
+                    />
+                    <span class="opacity-value">{{ floorOptions.opacity.toFixed(1) }}</span>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch, inject, onMounted } from 'vue'
+import { ref, watch, inject, onMounted, reactive } from 'vue'
 import { 
   ZoomIn, VideoPlay, VideoPause, RefreshRight, 
-  Brush, Picture, Refresh, Select 
+  Brush, Picture, Refresh, Select, Grid 
 } from '@element-plus/icons-vue'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 import { defaultPredefineColors } from '../../config/colorConfig'
-import { defaultHelperConfig, BackgroundType } from '../../config/helperConfig'
+import { defaultModelConfig, BackgroundType } from '../../config/modelConfig'
 
 const props = defineProps<{
-  scale: number
   isPlaying: boolean
 }>()
 
 // 注入场景事件
 const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
 
-// 本地缩放值
-const localScale = ref(props.scale)
-
 // 使用预设颜色
 const predefineColors = ref(defaultPredefineColors)
-// 背景相关状态
-const backgroundType = ref(defaultHelperConfig.backgroundType)
-const backgroundColor = ref(defaultHelperConfig.backgroundColor)
-const backgroundImage = ref(defaultHelperConfig.backgroundImage)
 
-// 监听 props 变化
-watch(() => props.scale, (newScale) => {
-  localScale.value = newScale
+// 背景相关状态 - 从 modelConfig 获取
+const backgroundOptions = reactive({
+  ...defaultModelConfig.background
 })
+
+// 地板配置 - 从 modelConfig.helperConfig 获取
+const floorOptions = reactive({
+  ...defaultModelConfig.helperConfig.floor
+})
+
+// 动画状态 - 从 modelConfig 获取
+const isPlaying = ref(defaultModelConfig.isPlaying)
 
 // 处理背景颜色变化
 const handleBackgroundColorChange = (color: string) => {
@@ -157,10 +205,9 @@ const randomImages = ref<string[]>([])
 // 生成随机图片列表
 const generateRandomImages = () => {
   const images: string[] = []
-  const seed = Math.floor(Math.random() * 1000)  // 使用随机种子
+  const seed = Math.floor(Math.random() * 1000)
   
   for (let i = 0; i < 10; i++) {
-    // 使用固定的图片ID，确保每次获取相同的图片
     images.push(`https://picsum.photos/seed/${seed + i}/1920/1080`)
   }
   return images
@@ -169,13 +216,10 @@ const generateRandomImages = () => {
 // 刷新随机图片
 const refreshRandomImages = async () => {
   try {
-    // 清空当前选择
-    backgroundImage.value = ''
+    backgroundOptions.image = ''
     
-    // 生成新的图片列表
     const newImages = generateRandomImages()
     
-    // 预加载所有图片
     const loadedImages = await Promise.all(
       newImages.map(url => 
         new Promise<string>((resolve, reject) => {
@@ -188,24 +232,19 @@ const refreshRandomImages = async () => {
       )
     )
 
-    // 更新图片列表
     randomImages.value = loadedImages
   } catch (error) {
     console.error('刷新随机图片失败:', error)
-    randomImages.value = []  // 清空列表
+    randomImages.value = []
   }
 }
 
 // 选择背景图片
 const selectBackgroundImage = async (image: string) => {
   try {
-    // 设置类型为图片
-    backgroundType.value = BackgroundType.Image
+    backgroundOptions.type = BackgroundType.Image
+    backgroundOptions.image = image
     
-    // 设置选中状态
-    backgroundImage.value = image
-    
-    // 确保图片已加载
     await new Promise((resolve, reject) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -214,16 +253,27 @@ const selectBackgroundImage = async (image: string) => {
       img.src = image
     })
 
-    // 更新场景背景
     await sceneEvents?.updateBackground({
       type: BackgroundType.Image,
       value: image
     })
   } catch (error) {
     console.error('选择背景图片失败:', error)
-    // 恢复到颜色模式
-    backgroundType.value = BackgroundType.Color
-    backgroundImage.value = ''
+    backgroundOptions.type = BackgroundType.Color
+    backgroundOptions.image = ''
+  }
+}
+
+// 地板控制方法
+const handleFloorColorChange = (color: string) => {
+  if (floorOptions.show) {
+    sceneEvents?.updateFloorColor(color)
+  }
+}
+
+const handleFloorOpacityChange = (opacity: number) => {
+  if (floorOptions.show) {
+    sceneEvents?.updateFloorOpacity(opacity)
   }
 }
 
@@ -266,6 +316,65 @@ onMounted(async () => {
         outline-offset: 2px;
         transform: translateY(-2px);
         box-shadow: 0 6px 16px rgba(var(--el-color-primary-rgb), 0.2);
+      }
+    }
+  }
+}
+
+// 复用 RenderControls 的地板控制样式
+.render-controls {
+  .render-group {
+    position: relative;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--el-fill-color-light);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: var(--el-fill-color);
+    }
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    .render-option {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 32px;
+      margin-bottom: 12px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      span {
+        color: var(--el-text-color-primary);
+        font-size: 14px;
+      }
+
+      .opacity-control {
+        display: flex;
+        align-items: center;
+        flex: 1;
+        margin-left: 16px;
+        gap: 8px;
+        
+        .el-slider {
+          flex: 1;
+        }
+        
+        .opacity-value {
+          min-width: 36px;
+          padding: 2px 6px;
+          text-align: center;
+          background: var(--el-fill-color-darker);
+          border-radius: 4px;
+          color: var(--el-text-color-secondary);
+          font-size: 12px;
+        }
       }
     }
   }

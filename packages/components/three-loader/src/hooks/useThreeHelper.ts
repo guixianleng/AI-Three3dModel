@@ -2,23 +2,18 @@ import * as THREE from 'three'
 import { ref, markRaw } from 'vue'
 import Stats from 'three/examples/jsm/libs/stats.module'
 import type { IHelperOptions } from '../types/scene'
-import { defaultHelperConfig } from '../config/helperConfig'
+import { defaultModelConfig } from '../config/modelConfig'
 
 /**
  * Three.js 场景辅助工具管理 Hook
  */
-export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
+export function useThreeHelper(options: IHelperOptions = defaultModelConfig.helperConfig) {
   // 解构配置选项并设置默认值
   const {
-    showGrid = true,
-    showStats = true,
-    showAxes = true,
-    showFloor = true,
-    gridSize = 2000,
-    gridDivisions = 100,
-    gridColor = 0x888888,
-    axesSize = 1000,
-    floorColor = 0xcccccc
+    grid: { show: showGrid, size: gridSize, divisions: gridDivisions, color: gridColor },
+    axes: { show: showAxes, size: axesSize },
+    floor: { show: showFloor, color: floorColor, opacity: floorOpacity },
+    stats: { show: showStats }
   } = options
 
   // 辅助工具引用
@@ -34,15 +29,24 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
     try {
       const geometry = markRaw(new THREE.PlaneGeometry(gridSize, gridSize))
       const material = markRaw(new THREE.MeshStandardMaterial({ 
-        color: floorColor,
-        roughness: 0.8,
-        metalness: 0.2
+        color: floorColor,        // 材质的基本颜色
+        roughness: 0.8,           // 材质的粗糙度，0表示镜面反射，1表示完全漫反射
+        metalness: 0.2,           // 材质的金属度，0表示非金属材质，1表示金属材质
+        transparent: true,        // 是否开启透明
+        opacity: floorOpacity,    // 使用配置的透明度
+        side: THREE.DoubleSide,   // 渲染面片的正反面
+        depthWrite: false         // 禁用深度写入，避免透明物体的渲染问题
       }))
       const floorMesh = markRaw(new THREE.Mesh(geometry, material))
+      
+      // 确保地板位于 y=0 平面，并且朝上
       floorMesh.rotation.x = -Math.PI / 2
       floorMesh.position.y = 0
       floorMesh.receiveShadow = true
       floorMesh.visible = showFloor
+      // 添加名称以便后续查找
+      floorMesh.name = 'floor'
+      
       return floorMesh
     } catch (error) {
       console.error('创建地板失败:', error)
@@ -274,6 +278,19 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
     }
   }
 
+  /**
+   * 更新地板透明度
+   */
+  const updateFloorOpacity = (opacity: number) => {
+    if (!floor.value) return
+    
+    const material = floor.value.material as THREE.MeshStandardMaterial
+    if (material) {
+      material.opacity = Math.max(0, Math.min(1, opacity)) // 确保透明度在 0-1 之间
+      material.needsUpdate = true
+    }
+  }
+
   return {
     stats,
     gridHelper,
@@ -288,6 +305,7 @@ export function useThreeHelper(options: IHelperOptions = defaultHelperConfig) {
     toggleFloor,
     updateStats,
     updateFloorColor,
-    dispose
+    updateFloorOpacity,
+    dispose,
   }
 } 

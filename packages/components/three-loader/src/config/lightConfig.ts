@@ -15,24 +15,22 @@ export const defaultLightConfig: SceneLightsConfig = {
   // 平行光配置
   directional: {
     enabled: true,
-    intensity: 1,
     color: '#ffffff',
+    intensity: 1,
     position: { x: 50, y: 50, z: 50 },
     shadow: {
       enabled: true,
       mapSize: 4096,
-      bias: -0.001,
-      radius: 4,
-      blurSamples: 8,
       camera: {
-        near: 0.5,
+        near: 1,
         far: 1000,
         left: -100,
         right: 100,
         top: 100,
         bottom: -100
       }
-    }
+    },
+    helper: false
   },
   
   // 点光源配置 - 默认禁用且位置在原点

@@ -6,28 +6,36 @@ import type { ICameraOptions } from '../types/camera'
  * Three.js 相机管理 Hook
  */
 export function useThreeCamera(options: ICameraOptions = {}) {
-  const {
-    fov = 75,
-    near = 0.1,
-    far = 1000,
-    position = { x: 0, y: 100, z: 200 }
-  } = options
+  const {fov,near,far,position} = options
 
-  const camera = shallowRef<THREE.PerspectiveCamera>()
+  // 初始化时就创建相机
+  const camera = shallowRef<THREE.PerspectiveCamera>(
+    new THREE.PerspectiveCamera(fov, 1, near, far)
+  )
+
+  // 设置初始位置
+  camera.value.position.set(position.x, position.y, position.z)
 
   /**
    * 创建相机
    */
   const createCamera = (aspect: number) => {
     try {
-      const newCamera = new THREE.PerspectiveCamera(fov, aspect, near, far)
-      newCamera.position.set(position.x, position.y, position.z)
-      camera.value = newCamera
-      return newCamera
+      // 只更新相机的宽高比，而不是重新创建相机
+      camera.value.aspect = aspect
+      camera.value.updateProjectionMatrix()
+      return camera.value
     } catch (error) {
-      console.error('创建相机失败:', error)
+      console.error('更新相机失败:', error)
       return null
     }
+  }
+
+  /**
+   * 设置相机
+   */
+  const setCamera = (newCamera: THREE.PerspectiveCamera) => {
+    camera.value = newCamera
   }
 
   /**
@@ -49,6 +57,7 @@ export function useThreeCamera(options: ICameraOptions = {}) {
   return {
     camera,
     createCamera,
+    setCamera,
     updateAspect,
     dispose
   }

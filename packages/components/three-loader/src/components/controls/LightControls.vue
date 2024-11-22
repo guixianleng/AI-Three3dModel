@@ -261,20 +261,7 @@ const predefineColors = ref([
  * 处理光源变化
  */
 const handleLightChange = (lightType: string, property: string, value: any) => {
-  try {
-    // 构建完整的光源配置对象
-    const lightConfig = {
-      ...props.lights[lightType],  // 使用 props 中的 lights
-      [property]: value  // 更新指定属性
-    }
-
-    // 调用更新函数
-    sceneEvents?.lightChange(lightType, lightConfig)
-    
-    console.log(`光源 ${lightType} 属性更新:`, { property, value })
-  } catch (error) {
-    console.error('更新光源属性失败:', error)
-  }
+  sceneEvents?.lightChange(lightType, property, value)
 }
 
 // 更新光源位置

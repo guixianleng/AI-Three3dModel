@@ -103,22 +103,49 @@ export function getLoaderByFileType(fileType: ModelFileType, options: LoaderOpti
 }
 
 /**
- * 计算模型合适的缩放比例
+ * 计算模型的边界信息
+ * @param object - 3D对象
+ * @returns 边界框信息，包含尺寸和中心点
  */
-function computeModelScale(object: THREE.Object3D): number {
-  // 计算包围盒
+export function getModelBounds(object: THREE.Object3D) {
   const box = new THREE.Box3().setFromObject(object)
-  const size = box.getSize(new THREE.Vector3())
+  const size = new THREE.Vector3()
+  const center = new THREE.Vector3()
+  
+  box.getSize(size)
+  box.getCenter(center)
+  
+  return {
+    box,
+    size,
+    center,
+    minY: box.min.y,  // 模型最低点
+    maxY: box.max.y   // 模型最高点
+  }
+}
+
+/**
+ * 计算模型合适的位置和缩放
+ */
+function computeModelTransform(object: THREE.Object3D) {
+  const bounds = getModelBounds(object)
+  const { size, center } = bounds
   
   // 获取模型的最大尺寸
   const maxSize = Math.max(size.x, size.y, size.z)
   
-  // 根据最大尺寸计算合适的缩放比例
-  // 假设我们希望模型的最大尺寸为100单位
+  // 计算合适的缩放比例
   const targetSize = 100
   const scale = targetSize / maxSize
+
+  // 计算位置，使模型底部正好在地面上
+  const position = new THREE.Vector3(
+    -center.x * scale,           // 水平居中
+    -bounds.minY * scale,        // 将模型底部对齐到 y=0
+    -center.z * scale            // 深度居中
+  )
   
-  return scale
+  return { position, scale }
 }
 
 /**
@@ -169,10 +196,11 @@ function processModelMaterials(object: any): THREE.Group {
     model = new THREE.Group()
     model.add(object)
   }
-  
-  // 计算并设置合适的缩放比例
-  const scale = computeModelScale(model)
-  model.scale.setScalar(scale)
+
+  // 计算并设置合适的位置和缩放
+  const transform = computeModelTransform(model)
+  model.position.copy(transform.position)
+  model.scale.setScalar(transform.scale)
 
   // 设置阴影
   if (typeof model.traverse === 'function') {

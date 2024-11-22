@@ -56,7 +56,7 @@ const {
   updateFloorColor,
   updateBackground,
   updateLight,
-  setBackgroundColor,
+  updateFloorOpacity,
 } = useThreeScene({
   lights: defaultLightConfig,
   helper: defaultHelperConfig
@@ -84,6 +84,28 @@ const takeScreenshot = () => {
   link.click()
 }
 
+// 修改光源处理函数
+const handleLightChange = (lightType: string, property: string, value: any) => {
+  try {
+    // 更新控制状态
+    if (lightType in modelControls.lights) {
+      const light = modelControls.lights[lightType]
+      if (property.includes('.')) {
+        const [prop, subProp] = property.split('.')
+        light[prop][subProp] = value
+      } else {
+        light[property] = value
+      }
+
+      // 更新场景中的光源
+      updateLight(lightType, light)
+      console.log(`光源 ${lightType} 已更新:`, { property, value })
+    }
+  } catch (error) {
+    console.error('更新光源失败:', error)
+  }
+}
+
 // 提供场景事件
 provide<SceneEvents>(SCENE_EVENTS_KEY, {
   resetView,
@@ -98,10 +120,10 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   toggleFloor,
   updateFloorColor,
   updateBackground,
-  updateBackgroundColor: setBackgroundColor,
-  lightChange: updateLight,
+  lightChange: handleLightChange,
   updateModelPosition: updatePosition,
   updateModelRotation: updateRotation,
+  updateFloorOpacity,
 })
 
 // 初始化

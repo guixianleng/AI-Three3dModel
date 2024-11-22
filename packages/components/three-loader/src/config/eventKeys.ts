@@ -1,12 +1,6 @@
+import type { InjectionKey } from 'vue'
 import type { IPosition } from '../types/positions'
-import { BackgroundType } from '../config/helperConfig'
-
-interface BackgroundUpdate {
-  type: BackgroundType
-  value: string
-}
-
-export const SCENE_EVENTS_KEY = Symbol('sceneEvents')
+import type { BackgroundUpdateOptions } from '../types/scene'
 
 export interface SceneEvents {
   resetView: () => void
@@ -18,11 +12,13 @@ export interface SceneEvents {
   toggleStats: (show: boolean) => void
   toggleAxes: (show: boolean) => void
   toggleFloor: (show: boolean) => void
-  updateFloorColor: (color: string) => void
-  updateBackgroundColor: (color: string) => void
+  updateFloorColor: (color: string | number) => void
+  updateFloorOpacity: (opacity: number) => void
   lightChange: (lightType: string, property: string, value: any) => void
   updateModelPosition: (position: IPosition) => void
   updateGridColor: (color: string) => void
   updateModelRotation: (rotation: IPosition) => void
-  updateBackground: (background: BackgroundUpdate) => void
-} 
+  updateBackground: (background: BackgroundUpdateOptions) => void
+}
+
+export const SCENE_EVENTS_KEY = Symbol() as InjectionKey<SceneEvents> 
