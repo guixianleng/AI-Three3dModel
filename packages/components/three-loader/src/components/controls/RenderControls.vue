@@ -12,12 +12,9 @@
             <div class="render-group">
               <div class="render-option">
                 <span>网格辅助线</span>
-                <el-switch
-                  v-model="gridOptions.show"
-                  @change="sceneEvents?.toggleGrid"
-                />
+                <el-switch v-model="gridOptions.show" @change="sceneEvents?.toggleGrid" />
               </div>
-              <div class="render-option" v-if="gridOptions.show">
+              <div v-if="gridOptions.show" class="render-option">
                 <span>网格颜色</span>
                 <el-color-picker
                   v-model="gridOptions.color"
@@ -42,10 +39,7 @@
                     <el-icon class="info-icon"><InfoFilled /></el-icon>
                   </div>
                 </el-tooltip>
-                <el-switch
-                  v-model="axesOptions.show"
-                  @change="sceneEvents?.toggleAxes"
-                />
+                <el-switch v-model="axesOptions.show" @change="sceneEvents?.toggleAxes" />
               </div>
             </div>
 
@@ -53,10 +47,7 @@
             <div class="render-group">
               <div class="render-option">
                 <span>性能监控</span>
-                <el-switch
-                  v-model="statsOptions.show"
-                  @change="sceneEvents?.toggleStats"
-                />
+                <el-switch v-model="statsOptions.show" @change="sceneEvents?.toggleStats" />
               </div>
             </div>
           </div>
@@ -84,7 +75,7 @@
                   :min="-100"
                   :max="100"
                   :step="1"
-                  :format-tooltip="(val) => `${val}`"
+                  :format-tooltip="val => `${val}`"
                   @change="updatePosition"
                 />
                 <span class="position-value">{{ position.x }}</span>
@@ -98,7 +89,7 @@
                   :min="-100"
                   :max="100"
                   :step="1"
-                  :format-tooltip="(val) => `${val}`"
+                  :format-tooltip="val => `${val}`"
                   @change="updatePosition"
                 />
                 <span class="position-value">{{ position.y }}</span>
@@ -112,7 +103,7 @@
                   :min="-100"
                   :max="100"
                   :step="1"
-                  :format-tooltip="(val) => `${val}`"
+                  :format-tooltip="val => `${val}`"
                   @change="updatePosition"
                 />
                 <span class="position-value">{{ position.z }}</span>
@@ -143,7 +134,7 @@
                   :min="-180"
                   :max="180"
                   :step="1"
-                  :format-tooltip="(val) => `${val}°`"
+                  :format-tooltip="val => `${val}°`"
                   @change="updateRotation"
                 />
                 <span class="position-value">{{ rotation.x }}°</span>
@@ -157,7 +148,7 @@
                   :min="-180"
                   :max="180"
                   :step="1"
-                  :format-tooltip="(val) => `${val}°`"
+                  :format-tooltip="val => `${val}°`"
                   @change="updateRotation"
                 />
                 <span class="position-value">{{ rotation.y }}°</span>
@@ -171,7 +162,7 @@
                   :min="-180"
                   :max="180"
                   :step="1"
-                  :format-tooltip="(val) => `${val}°`"
+                  :format-tooltip="val => `${val}°`"
                   @change="updateRotation"
                 />
                 <span class="position-value">{{ rotation.z }}°</span>
@@ -236,7 +227,7 @@ const updateRotation = () => {
   const radians = {
     x: (rotation.x * Math.PI) / 180,
     y: (rotation.y * Math.PI) / 180,
-    z: (rotation.z * Math.PI) / 180
+    z: (rotation.z * Math.PI) / 180,
   }
   sceneEvents?.updateModelRotation(radians)
 }
@@ -296,4 +287,4 @@ const resetRotation = () => {
     }
   }
 }
-</style> 
+</style>

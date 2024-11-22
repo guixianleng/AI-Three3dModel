@@ -129,4 +129,4 @@ export interface LightConfig {
     mapSize: number
     bias: number
   }
-} 
+}

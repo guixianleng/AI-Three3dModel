@@ -42,18 +42,18 @@ export const defaultHelperConfig: IHelperOptions = {
     show: false,
     size: 500,
     divisions: 100,
-    color: '#888'
+    color: '#888',
   },
   axes: {
     show: false,
-    size: 100
+    size: 100,
   },
   floor: {
     show: true,
     color: '#666',
-    opacity: 0.2
+    opacity: 0.2,
   },
   stats: {
-    show: true
-  }
-} 
+    show: true,
+  },
+}

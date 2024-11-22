@@ -13,7 +13,7 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
     grid: { show: showGrid, size: gridSize, divisions: gridDivisions, color: gridColor },
     axes: { show: showAxes, size: axesSize },
     floor: { show: showFloor, color: floorColor, opacity: floorOpacity },
-    stats: { show: showStats }
+    stats: { show: showStats },
   } = options
 
   // 辅助工具引用
@@ -28,17 +28,19 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
   const createFloorMesh = () => {
     try {
       const geometry = markRaw(new THREE.PlaneGeometry(gridSize, gridSize))
-      const material = markRaw(new THREE.MeshStandardMaterial({ 
-        color: floorColor,        // 材质的基本颜色
-        roughness: 0.8,           // 材质的粗糙度，0表示镜面反射，1表示完全漫反射
-        metalness: 0.2,           // 材质的金属度，0表示非金属材质，1表示金属材质
-        transparent: true,        // 是否开启透明
-        opacity: floorOpacity,    // 使用配置的透明度
-        side: THREE.DoubleSide,   // 渲染面片的正反面
-        depthWrite: false         // 禁用深度写入，避免透明物体的渲染问题
-      }))
+      const material = markRaw(
+        new THREE.MeshStandardMaterial({
+          color: floorColor, // 材质的基本颜色
+          roughness: 0.8, // 材质的粗糙度，0表示镜面反射，1表示完全漫反射
+          metalness: 0.2, // 材质的金属度，0表示非金属材质，1表示金属材质
+          transparent: true, // 是否开启透明
+          opacity: floorOpacity, // 使用配置的透明度
+          side: THREE.DoubleSide, // 渲染面片的正反面
+          depthWrite: false, // 禁用深度写入，避免透明物体的渲染问题
+        })
+      )
       const floorMesh = markRaw(new THREE.Mesh(geometry, material))
-      
+
       // 确保地板位于 y=0 平面，并且朝上
       floorMesh.rotation.x = -Math.PI / 2
       floorMesh.position.y = 0
@@ -46,7 +48,7 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
       floorMesh.visible = showFloor
       // 添加名称以便后续查找
       floorMesh.name = 'floor'
-      
+
       return floorMesh
     } catch (error) {
       console.error('创建地板失败:', error)
@@ -118,7 +120,7 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
       console.log('辅助工具创建完成', {
         floor: !!floor.value,
         grid: !!gridHelper.value,
-        axes: !!axesHelper.value
+        axes: !!axesHelper.value,
       })
     } catch (error) {
       console.error('创建辅助工具失败:', error)
@@ -283,7 +285,7 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
    */
   const updateFloorOpacity = (opacity: number) => {
     if (!floor.value) return
-    
+
     const material = floor.value.material as THREE.MeshStandardMaterial
     if (material) {
       material.opacity = Math.max(0, Math.min(1, opacity)) // 确保透明度在 0-1 之间
@@ -308,4 +310,4 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
     updateFloorOpacity,
     dispose,
   }
-} 
+}

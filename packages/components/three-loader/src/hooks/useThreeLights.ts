@@ -1,11 +1,10 @@
 import * as THREE from 'three'
 import { ref } from 'vue'
-import type { 
-  AmbientLightConfig, 
-  DirectionalLightConfig, 
-  PointLightConfig, 
+import type {
+  AmbientLightConfig,
+  DirectionalLightConfig,
+  PointLightConfig,
   SpotLightConfig,
-  SceneLightsConfig 
 } from '../types/lights'
 
 /**
@@ -29,7 +28,7 @@ export function useThreeLights() {
   const lights = ref<SceneLights | null>(null)
   const helpers = ref<{ [key: string]: THREE.Object3D | null }>({
     directional: null,
-    point: null
+    point: null,
   })
   let currentScene: THREE.Scene | null = null
 
@@ -39,11 +38,7 @@ export function useThreeLights() {
   const createAmbientLight = (config: AmbientLightConfig) => {
     try {
       if (config.groundColor !== undefined) {
-        return new THREE.HemisphereLight(
-          config.color,
-          config.groundColor,
-          config.intensity
-        )
+        return new THREE.HemisphereLight(config.color, config.groundColor, config.intensity)
       }
       return new THREE.AmbientLight(config.color, config.intensity)
     } catch (error) {
@@ -86,12 +81,7 @@ export function useThreeLights() {
    */
   const createPointLight = (config: PointLightConfig) => {
     try {
-      const light = new THREE.PointLight(
-        config.color,
-        config.intensity * 3,
-        config.distance * 2,
-        1
-      )
+      const light = new THREE.PointLight(config.color, config.intensity * 3, config.distance * 2, 1)
       light.position.set(config.position.x, config.position.y, config.position.z)
       light.power = 800
       return light
@@ -115,7 +105,7 @@ export function useThreeLights() {
         config.decay
       )
       light.position.set(config.position.x, config.position.y, config.position.z)
-      
+
       const target = new THREE.Object3D()
       target.position.set(config.target.x, config.target.y, config.target.z)
       light.target = target
@@ -157,13 +147,13 @@ export function useThreeLights() {
       console.log(`正在更新 ${lightType} 光源，当前配置:`, {
         enabled: config.enabled,
         intensity: 'intensity' in config ? config.intensity : undefined,
-        color: 'color' in config ? config.color : undefined
+        color: 'color' in config ? config.color : undefined,
       })
 
       // 更新可见性
       if ('enabled' in config) {
         light.visible = config.enabled
-        
+
         // 如果光源被禁用，强制移除辅助线
         if (!config.enabled) {
           if (lightType === 'directional') {
@@ -196,12 +186,12 @@ export function useThreeLights() {
         const oldColor = light.color.getHexString()
         const color = new THREE.Color(config.color)
         light.color.copy(color)
-        
+
         // 如果是点光源，增强颜色效果
         if (light instanceof THREE.PointLight) {
-          light.intensity = config.intensity * 3  // 增强强度
+          light.intensity = config.intensity * 3 // 增强强度
         }
-        
+
         console.log(`- 颜色已更新: #${oldColor} -> #${light.color.getHexString()}`)
       }
 
@@ -222,24 +212,20 @@ export function useThreeLights() {
       // 更新位置
       if ('position' in config) {
         const oldPosition = light.position.clone()
-        light.position.set(
-          config.position.x,
-          config.position.y,
-          config.position.z
-        )
+        light.position.set(config.position.x, config.position.y, config.position.z)
 
         // 如果是点光源，调整距离和功率
         if (light instanceof THREE.PointLight) {
-          light.distance = Math.max(400, light.position.length() * 2)  // 增加照射距离
-          light.power = 800  // 保持较高的光源功率
-          light.decay = 1    // 保持较低的衰减
+          light.distance = Math.max(400, light.position.length() * 2) // 增加照射距离
+          light.power = 800 // 保持较高的光源功率
+          light.decay = 1 // 保持较低的衰减
         }
 
         console.log('光源位置已更新:', {
           old: oldPosition,
           new: light.position,
           distance: light.position.length(),
-          power: light instanceof THREE.PointLight ? light.power : undefined
+          power: light instanceof THREE.PointLight ? light.power : undefined,
         })
 
         // 如果是平行光或点光源，更新辅助线
@@ -294,11 +280,7 @@ export function useThreeLights() {
 
     // 只在需要显示时创建新的辅助线
     if (show && lights.value.directional.visible) {
-      const helper = new THREE.DirectionalLightHelper(
-        lights.value.directional,
-        5,
-        0xffff00
-      )
+      const helper = new THREE.DirectionalLightHelper(lights.value.directional, 5, 0xffff00)
       currentScene.add(helper)
       helpers.value.directional = helper
       console.log('平行光辅助线已添加')
@@ -320,11 +302,7 @@ export function useThreeLights() {
 
     // 只在需要显示时创建新的辅助线
     if (show && lights.value.point.visible) {
-      const helper = new THREE.PointLightHelper(
-        lights.value.point,
-        5,
-        0xffff00
-      )
+      const helper = new THREE.PointLightHelper(lights.value.point, 5, 0xffff00)
       currentScene.add(helper)
       helpers.value.point = helper
       console.log('点光源辅助线已添加')
@@ -338,12 +316,12 @@ export function useThreeLights() {
     try {
       console.log('开始初始化场景光源...')
       currentScene = scene // 保存场景引用
-      
+
       const newLights: SceneLights = {
         ambient: createAmbientLight(configs.ambient),
         directional: createDirectionalLight(configs.directional),
         point: createPointLight(configs.point),
-        spot: createSpotLight(configs.spot)
+        spot: createSpotLight(configs.spot),
       }
 
       // 添加光源到场景
@@ -389,6 +367,6 @@ export function useThreeLights() {
     lights,
     addLightsToScene,
     removeLightsFromScene,
-    updateLight
+    updateLight,
   }
-} 
+}

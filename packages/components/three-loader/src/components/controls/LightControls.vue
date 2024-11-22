@@ -6,33 +6,33 @@
         <el-icon><Sunny /></el-icon>
         <span>环境光</span>
         <el-switch
-          v-model="lights.ambient.enabled"
-          @change="(val) => handleLightChange('ambient', 'enabled', val)"
+          v-model="localLights.ambient.enabled"
           class="switch-inline"
+          @change="val => handleLightChange('ambient', 'enabled', val)"
         />
       </div>
-      <div class="section-content" v-if="lights.ambient.enabled">
+      <div v-if="localLights.ambient.enabled" class="section-content">
         <div class="control-item">
           <div class="control-content">
             <div class="control-row">
               <span>光照强度</span>
               <el-slider
-                v-model="lights.ambient.intensity"
+                v-model="localLights.ambient.intensity"
                 :min="0"
                 :max="2"
                 :step="0.1"
                 style="width: 140px"
-                @change="(val) => handleLightChange('ambient', 'intensity', val)"
+                @change="val => handleLightChange('ambient', 'intensity', val)"
               />
             </div>
             <div class="control-row">
               <span>光照颜色</span>
               <el-color-picker
-                v-model="lights.ambient.color"
+                v-model="localLights.ambient.color"
                 show-alpha
                 size="small"
                 :predefine="predefineColors"
-                @change="(val) => handleLightChange('ambient', 'color', val)"
+                @change="val => handleLightChange('ambient', 'color', val)"
               />
             </div>
           </div>
@@ -46,34 +46,34 @@
         <el-icon><Sunny /></el-icon>
         <span>平行光</span>
         <el-switch
-          v-model="lights.directional.enabled"
-          @change="(val) => handleLightChange('directional', 'enabled', val)"
+          v-model="localLights.directional.enabled"
           class="switch-inline"
+          @change="val => handleLightChange('directional', 'enabled', val)"
         />
       </div>
-      <div class="section-content" v-if="lights.directional.enabled">
+      <div v-if="localLights.directional.enabled" class="section-content">
         <div class="control-item">
           <div class="control-content">
             <!-- 基础设置 -->
             <div class="control-row">
               <span>光照强度</span>
               <el-slider
-                v-model="lights.directional.intensity"
+                v-model="localLights.directional.intensity"
                 :min="0"
                 :max="2"
                 :step="0.1"
                 style="width: 140px"
-                @change="(val) => handleLightChange('directional', 'intensity', val)"
+                @change="val => handleLightChange('directional', 'intensity', val)"
               />
             </div>
             <div class="control-row">
               <span>光照颜色</span>
               <el-color-picker
-                v-model="lights.directional.color"
+                v-model="localLights.directional.color"
                 show-alpha
                 size="small"
                 :predefine="predefineColors"
-                @change="(val) => handleLightChange('directional', 'color', val)"
+                @change="val => handleLightChange('directional', 'color', val)"
               />
             </div>
 
@@ -116,8 +116,8 @@
             <div class="control-row">
               <span>启用阴影</span>
               <el-switch
-                v-model="lights.directional.shadow.enabled"
-                @change="(val) => handleLightChange('directional', 'shadow.enabled', val)"
+                v-model="localLights.directional.shadow.enabled"
+                @change="val => handleLightChange('directional', 'shadow.enabled', val)"
               />
             </div>
 
@@ -126,7 +126,7 @@
               <span>显示辅助线</span>
               <el-switch
                 v-model="showHelper"
-                @change="(val) => handleLightChange('directional', 'helper', val)"
+                @change="val => handleLightChange('directional', 'helper', val)"
               />
             </div>
           </div>
@@ -140,34 +140,34 @@
         <el-icon><Sunny /></el-icon>
         <span>点光源</span>
         <el-switch
-          v-model="lights.point.enabled"
-          @change="(val) => handleLightChange('point', 'enabled', val)"
+          v-model="localLights.point.enabled"
           class="switch-inline"
+          @change="val => handleLightChange('point', 'enabled', val)"
         />
       </div>
-      <div class="section-content" v-if="lights.point.enabled">
+      <div v-if="localLights.point.enabled" class="section-content">
         <div class="control-item">
           <div class="control-content">
             <!-- 基础设置 -->
             <div class="control-row">
               <span>光照强度</span>
               <el-slider
-                v-model="lights.point.intensity"
+                v-model="localLights.point.intensity"
                 :min="0"
                 :max="2"
                 :step="0.1"
                 style="width: 140px"
-                @change="(val) => handleLightChange('point', 'intensity', val)"
+                @change="val => handleLightChange('point', 'intensity', val)"
               />
             </div>
             <div class="control-row">
               <span>光照颜色</span>
               <el-color-picker
-                v-model="lights.point.color"
+                v-model="localLights.point.color"
                 show-alpha
                 size="small"
                 :predefine="predefineColors"
-                @change="(val) => handleLightChange('point', 'color', val)"
+                @change="val => handleLightChange('point', 'color', val)"
               />
             </div>
 
@@ -211,7 +211,7 @@
               <span>显示辅助线</span>
               <el-switch
                 v-model="showPointHelper"
-                @change="(val) => handleLightChange('point', 'helper', val)"
+                @change="val => handleLightChange('point', 'helper', val)"
               />
             </div>
           </div>
@@ -222,9 +222,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, inject } from 'vue'
+import { ref, inject, reactive } from 'vue'
 import { Sunny } from '@element-plus/icons-vue'
 import type { SceneLightsConfig } from '../../types/lights'
+import { defaultPredefineColors } from '../../config/colorConfig'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 
@@ -234,6 +235,10 @@ const props = defineProps<{
 
 // 注入场景事件
 const sceneEvents = inject<SceneEvents>(SCENE_EVENTS_KEY)
+
+const localLights = reactive({
+  ...props.lights,
+})
 
 // 平行光位置控制
 const horizontalAngle = ref(45)
@@ -248,14 +253,7 @@ const pointDistance = ref(100)
 const showPointHelper = ref(false)
 
 // 预设颜色
-const predefineColors = ref([
-  '#ff9900',  // 暖黄色
-  '#ffffff',  // 白色
-  '#2468f2',  // 蓝色
-  '#67c23a',  // 绿色
-  '#f56c6c',  // 红色
-  '#b643cd'   // 紫色
-])
+const predefineColors = ref(defaultPredefineColors)
 
 /**
  * 处理光源变化
@@ -296,42 +294,42 @@ const updatePointLightPosition = () => {
 </script>
 
 <style lang="scss" scoped>
-@use './style.scss';
+.control-sections {
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    font-size: 15px;
+    color: var(--el-text-color-primary);
 
-.section-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  font-weight: bold;
-  font-size: 15px;
-  color: var(--el-text-color-primary);
-
-  .switch-inline {
-    margin-left: auto;
+    .switch-inline {
+      margin-left: auto;
+    }
   }
-}
 
-.control-item {
-  border-radius: 6px;
-  padding-bottom: 20px;
-  
-  .control-content {
-    .control-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      font-size: 14px;
-      color: var(--el-text-color-regular);
+  .control-item {
+    border-radius: 6px;
+    padding-bottom: 20px;
 
-      &:last-child {
-        margin-bottom: 0;
-      }
+    .control-content {
+      .control-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        font-size: 14px;
+        color: var(--el-text-color-regular);
 
-      // 调整滑块和选择器的宽度
-      .el-slider, .el-select {
-        width: 140px;
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .el-slider,
+        .el-select {
+          width: 140px;
+        }
       }
     }
   }

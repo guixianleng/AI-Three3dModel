@@ -9,9 +9,9 @@ export const defaultLightConfig: SceneLightsConfig = {
     enabled: true,
     intensity: 0.5,
     color: '#ffffff',
-    groundColor: '#444444'  // 半球光地面颜色
+    groundColor: '#444444', // 半球光地面颜色
   },
-  
+
   // 平行光配置
   directional: {
     enabled: true,
@@ -27,12 +27,12 @@ export const defaultLightConfig: SceneLightsConfig = {
         left: -100,
         right: 100,
         top: 100,
-        bottom: -100
-      }
+        bottom: -100,
+      },
     },
-    helper: false
+    helper: false,
   },
-  
+
   // 点光源配置 - 默认禁用且位置在原点
   point: {
     enabled: false,
@@ -49,9 +49,9 @@ export const defaultLightConfig: SceneLightsConfig = {
       blurSamples: 8,
       camera: {
         near: 0.5,
-        far: 500
-      }
-    }
+        far: 500,
+      },
+    },
   },
 
   // 聚光灯配置
@@ -73,8 +73,8 @@ export const defaultLightConfig: SceneLightsConfig = {
       blurSamples: 8,
       camera: {
         near: 0.5,
-        far: 500
-      }
-    }
-  }
-} 
+        far: 500,
+      },
+    },
+  },
+}

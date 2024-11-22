@@ -21,4 +21,4 @@ export interface SceneEvents {
   updateBackground: (background: BackgroundUpdateOptions) => void
 }
 
-export const SCENE_EVENTS_KEY = Symbol() as InjectionKey<SceneEvents> 
+export const SCENE_EVENTS_KEY = Symbol() as InjectionKey<SceneEvents>

@@ -9,7 +9,7 @@ import { defaultModelConfig } from '../config/modelConfig'
 export function useModelAnimation() {
   // 使用默认配置初始化模型控制状态
   const modelControls: IModelControls = reactive({
-    ...defaultModelConfig
+    ...defaultModelConfig,
   })
 
   // 动画相关变量
@@ -83,13 +83,13 @@ export function useModelAnimation() {
       currentAction.stop()
       currentAction.reset()
       mixer.setTime(0)
-      
+
       // 重置状态
       currentAction = null
       lastTime = 0
       clock.stop()
       modelControls.isPlaying = false
-      
+
       console.log('动画已重置')
     } catch (error) {
       console.error('重置动画失败:', error)
@@ -115,6 +115,6 @@ export function useModelAnimation() {
     startAnimation,
     pauseAnimation,
     resetAnimation,
-    updateAnimation
+    updateAnimation,
   }
-} 
+}

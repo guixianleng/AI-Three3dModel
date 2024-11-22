@@ -1,12 +1,7 @@
 import type { ICameraOptions } from './camera'
 import type { IControlsOptions } from './controls'
 import type { SceneLightsConfig } from './lights'
-import type { 
-  GridConfig, 
-  AxesConfig, 
-  FloorConfig, 
-  StatsConfig 
-} from '../config/helperConfig'
+import type { GridConfig, AxesConfig, FloorConfig, StatsConfig } from '../config/helperConfig'
 
 /**
  * 场景配置选项接口

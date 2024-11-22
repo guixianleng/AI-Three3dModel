@@ -32,11 +32,7 @@
               <div class="render-option">
                 <span>背景图片</span>
                 <div class="action-button">
-                  <el-button 
-                    type="primary" 
-                    size="small"
-                    @click="refreshRandomImages"
-                  >
+                  <el-button type="primary" size="small" @click="refreshRandomImages">
                     <el-icon><Refresh /></el-icon>
                     换一批
                   </el-button>
@@ -44,19 +40,14 @@
               </div>
               <div class="image-gallery">
                 <div class="image-list">
-                  <div 
-                    v-for="(image, index) in randomImages" 
+                  <div
+                    v-for="(image, index) in randomImages"
                     :key="index"
                     class="image-item"
                     :class="{ active: image === backgroundOptions.image }"
                     @click="selectBackgroundImage(image)"
                   >
-                    <el-image
-                      :src="image"
-                      fit="cover"
-                      loading="lazy"
-                    >
-                    </el-image>
+                    <el-image :src="image" fit="cover" loading="lazy"> </el-image>
                   </div>
                 </div>
               </div>
@@ -80,24 +71,21 @@
               <el-button-group>
                 <el-button
                   :type="isPlaying ? 'primary' : ''"
-                  @click="sceneEvents?.startAnimation()"
                   :disabled="isPlaying"
                   title="播放动画"
+                  @click="sceneEvents?.startAnimation()"
                 >
                   <el-icon><VideoPlay /></el-icon>
                 </el-button>
                 <el-button
                   :type="!isPlaying ? 'primary' : ''"
-                  @click="sceneEvents?.pauseAnimation()"
                   :disabled="!isPlaying"
                   title="暂停动画"
+                  @click="sceneEvents?.pauseAnimation()"
                 >
                   <el-icon><VideoPause /></el-icon>
                 </el-button>
-                <el-button 
-                  @click="sceneEvents?.resetAnimation()"
-                  title="重置动画"
-                >
+                <el-button title="重置动画" @click="sceneEvents?.resetAnimation()">
                   <el-icon><RefreshRight /></el-icon>
                 </el-button>
               </el-button-group>
@@ -119,10 +107,7 @@
             <div class="render-group">
               <div class="render-option">
                 <span>显示地板</span>
-                <el-switch
-                  v-model="floorOptions.show"
-                  @change="sceneEvents?.toggleFloor"
-                />
+                <el-switch v-model="floorOptions.show" @change="sceneEvents?.toggleFloor" />
               </div>
               <template v-if="floorOptions.show">
                 <div class="render-option">
@@ -158,17 +143,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, inject, onMounted, reactive } from 'vue'
-import { 
-  ZoomIn, VideoPlay, VideoPause, RefreshRight, 
-  Brush, Picture, Refresh, Select, Grid 
-} from '@element-plus/icons-vue'
+import { ref, inject, onMounted, reactive } from 'vue'
+import { VideoPlay, VideoPause, RefreshRight, Brush, Refresh, Grid } from '@element-plus/icons-vue'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 import { defaultPredefineColors } from '../../config/colorConfig'
 import { defaultModelConfig, BackgroundType } from '../../config/modelConfig'
 
-const props = defineProps<{
+defineProps<{
   isPlaying: boolean
 }>()
 
@@ -180,22 +162,19 @@ const predefineColors = ref(defaultPredefineColors)
 
 // 背景相关状态 - 从 modelConfig 获取
 const backgroundOptions = reactive({
-  ...defaultModelConfig.background
+  ...defaultModelConfig.background,
 })
 
 // 地板配置 - 从 modelConfig.helperConfig 获取
 const floorOptions = reactive({
-  ...defaultModelConfig.helperConfig.floor
+  ...defaultModelConfig.helperConfig.floor,
 })
-
-// 动画状态 - 从 modelConfig 获取
-const isPlaying = ref(defaultModelConfig.isPlaying)
 
 // 处理背景颜色变化
 const handleBackgroundColorChange = (color: string) => {
   sceneEvents?.updateBackground({
     type: BackgroundType.Color,
-    value: color
+    value: color,
   })
 }
 
@@ -206,7 +185,7 @@ const randomImages = ref<string[]>([])
 const generateRandomImages = () => {
   const images: string[] = []
   const seed = Math.floor(Math.random() * 1000)
-  
+
   for (let i = 0; i < 10; i++) {
     images.push(`https://picsum.photos/seed/${seed + i}/1920/1080`)
   }
@@ -217,18 +196,19 @@ const generateRandomImages = () => {
 const refreshRandomImages = async () => {
   try {
     backgroundOptions.image = ''
-    
+
     const newImages = generateRandomImages()
-    
+
     const loadedImages = await Promise.all(
-      newImages.map(url => 
-        new Promise<string>((resolve, reject) => {
-          const img = new Image()
-          img.crossOrigin = 'anonymous'
-          img.onload = () => resolve(url)
-          img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
-          img.src = url
-        })
+      newImages.map(
+        url =>
+          new Promise<string>((resolve, reject) => {
+            const img = new Image()
+            img.crossOrigin = 'anonymous'
+            img.onload = () => resolve(url)
+            img.onerror = () => reject(new Error(`Failed to load image: ${url}`))
+            img.src = url
+          })
       )
     )
 
@@ -244,7 +224,7 @@ const selectBackgroundImage = async (image: string) => {
   try {
     backgroundOptions.type = BackgroundType.Image
     backgroundOptions.image = image
-    
+
     await new Promise((resolve, reject) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -255,7 +235,7 @@ const selectBackgroundImage = async (image: string) => {
 
     await sceneEvents?.updateBackground({
       type: BackgroundType.Image,
-      value: image
+      value: image,
     })
   } catch (error) {
     console.error('选择背景图片失败:', error)
@@ -361,11 +341,11 @@ onMounted(async () => {
         flex: 1;
         margin-left: 16px;
         gap: 8px;
-        
+
         .el-slider {
           flex: 1;
         }
-        
+
         .opacity-value {
           min-width: 36px;
           padding: 2px 6px;
@@ -379,4 +359,4 @@ onMounted(async () => {
     }
   }
 }
-</style> 
+</style>

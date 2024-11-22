@@ -34,6 +34,6 @@ export const defaultCameraConfig: CameraConfig = {
   far: 1000,
   position: {
     initial: { x: 0, y: 100, z: 200 },
-    target: { x: 0, y: 0, z: 0 }
-  }
-} 
+    target: { x: 0, y: 0, z: 0 },
+  },
+}

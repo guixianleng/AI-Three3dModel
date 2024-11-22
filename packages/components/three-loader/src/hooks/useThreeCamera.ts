@@ -6,12 +6,10 @@ import type { ICameraOptions } from '../types/camera'
  * Three.js 相机管理 Hook
  */
 export function useThreeCamera(options: ICameraOptions = {}) {
-  const {fov,near,far,position} = options
+  const { fov, near, far, position } = options
 
   // 初始化时就创建相机
-  const camera = shallowRef<THREE.PerspectiveCamera>(
-    new THREE.PerspectiveCamera(fov, 1, near, far)
-  )
+  const camera = shallowRef<THREE.PerspectiveCamera>(new THREE.PerspectiveCamera(fov, 1, near, far))
 
   // 设置初始位置
   camera.value.position.set(position.x, position.y, position.z)
@@ -59,6 +57,6 @@ export function useThreeCamera(options: ICameraOptions = {}) {
     createCamera,
     setCamera,
     updateAspect,
-    dispose
+    dispose,
   }
-} 
+}

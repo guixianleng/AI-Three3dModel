@@ -6,8 +6,8 @@
         circle
         type="primary"
         size="small"
-        @click="toggleVisible"
         :title="visible ? '隐藏配置面板' : '显示配置面板'"
+        @click="toggleVisible"
       >
         <el-icon>
           <Close v-if="visible" />
@@ -25,17 +25,17 @@
           </div>
           <div class="actions">
             <el-button-group>
-              <el-button size="small" @click="sceneEvents?.resetView()" title="重置视角">
+              <el-button size="small" title="重置视角" @click="sceneEvents?.resetView()">
                 <el-icon><RefreshRight /></el-icon>
               </el-button>
-              <el-button size="small" @click="sceneEvents?.takeScreenshot()" title="截图">
+              <el-button size="small" title="截图" @click="sceneEvents?.takeScreenshot()">
                 <el-icon><Camera /></el-icon>
               </el-button>
             </el-button-group>
           </div>
         </div>
       </template>
-      
+
       <div class="control-content">
         <!-- 控制模块切换 -->
         <div class="module-selector">
@@ -63,10 +63,7 @@
 
         <RenderControls v-show="activeModule === 'render'" />
 
-        <LightControls
-          v-show="activeModule === 'lights'"
-          :lights="modelControls.lights"
-        />
+        <LightControls v-show="activeModule === 'lights'" :lights="modelControls.lights" />
       </div>
     </el-card>
   </div>
@@ -74,7 +71,15 @@
 
 <script setup lang="ts">
 import { ref, inject } from 'vue'
-import { Tools, Monitor, Sunny, RefreshRight, Camera, Setting, Close } from '@element-plus/icons-vue'
+import {
+  Tools,
+  Monitor,
+  Sunny,
+  RefreshRight,
+  Camera,
+  Setting,
+  Close,
+} from '@element-plus/icons-vue'
 import type { IModelControls } from '../types/controls'
 import type { SceneEvents } from '../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../config/eventKeys'
@@ -82,7 +87,7 @@ import BasicControls from './controls/BasicControls.vue'
 import RenderControls from './controls/RenderControls.vue'
 import LightControls from './controls/LightControls.vue'
 
-const props = defineProps<{
+defineProps<{
   modelControls: IModelControls
 }>()
 
@@ -100,7 +105,7 @@ const toggleVisible = () => {
   position: relative;
   height: 100%;
   width: 100%;
-  
+
   .hide-button {
     position: absolute;
     top: 50%;
@@ -124,7 +129,7 @@ const toggleVisible = () => {
       box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
       background-color: var(--el-color-primary);
       color: #fff;
-      
+
       &:hover {
         transform: translateX(-4px);
       }
@@ -138,10 +143,10 @@ const toggleVisible = () => {
   .model-controls {
     width: 100%;
     height: 100%;
-    background: #ffffff;
+    background: #fff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-    
+
     .panel-header {
       display: flex;
       justify-content: space-between;
@@ -157,7 +162,7 @@ const toggleVisible = () => {
         .el-button-group {
           .el-button {
             padding: 6px 12px;
-            
+
             .el-icon {
               margin-right: 0;
             }
@@ -185,4 +190,4 @@ const toggleVisible = () => {
     }
   }
 }
-</style> 
+</style>

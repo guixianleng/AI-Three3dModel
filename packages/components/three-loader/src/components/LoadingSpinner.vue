@@ -28,12 +28,7 @@ const props = defineProps<{
   textChangeInterval?: number
 }>()
 
-const defaultTexts = [
-  '正在加载模型...',
-  '初始化场景...',
-  '准备渲染...',
-  '马上就好...'
-]
+const defaultTexts = ['正在加载模型...', '初始化场景...', '准备渲染...', '马上就好...']
 
 const currentText = ref(props.texts?.[0] || defaultTexts[0])
 let textChangeTimer: number | null = null
@@ -42,10 +37,10 @@ let currentIndex = 0
 // 自动切换文本
 const startTextChange = () => {
   if (!props.autoChangeText) return
-  
+
   // 先清除可能存在的定时器
   clearTextChange()
-  
+
   textChangeTimer = window.setInterval(() => {
     const texts = props.texts || defaultTexts
     currentIndex = (currentIndex + 1) % texts.length
@@ -62,39 +57,48 @@ const clearTextChange = () => {
 }
 
 // 监听进度变化
-watch(() => props.progress, (newProgress) => {
-  // 根据进度自动选择文本
-  if (newProgress < 25) {
-    currentIndex = 0
-  } else if (newProgress < 50) {
-    currentIndex = 1
-  } else if (newProgress < 75) {
-    currentIndex = 2
-  } else {
-    currentIndex = 3
-  }
-  currentText.value = (props.texts || defaultTexts)[currentIndex]
+watch(
+  () => props.progress,
+  newProgress => {
+    // 根据进度自动选择文本
+    if (newProgress < 25) {
+      currentIndex = 0
+    } else if (newProgress < 50) {
+      currentIndex = 1
+    } else if (newProgress < 75) {
+      currentIndex = 2
+    } else {
+      currentIndex = 3
+    }
+    currentText.value = (props.texts || defaultTexts)[currentIndex]
 
-  if (newProgress >= 100) {
-    clearTextChange()
+    if (newProgress >= 100) {
+      clearTextChange()
+    }
   }
-})
+)
 
 // 监听自动切换文本的配置变化
-watch(() => props.autoChangeText, (newValue) => {
-  if (newValue) {
-    startTextChange()
-  } else {
-    clearTextChange()
+watch(
+  () => props.autoChangeText,
+  newValue => {
+    if (newValue) {
+      startTextChange()
+    } else {
+      clearTextChange()
+    }
   }
-})
+)
 
 // 监听文本切换间隔的变化
-watch(() => props.textChangeInterval, () => {
-  if (props.autoChangeText) {
-    startTextChange() // 重新启动定时器以使用新的间隔
+watch(
+  () => props.textChangeInterval,
+  () => {
+    if (props.autoChangeText) {
+      startTextChange() // 重新启动定时器以使用新的间隔
+    }
   }
-})
+)
 
 onMounted(() => {
   if (props.autoChangeText) {
@@ -123,7 +127,7 @@ onBeforeUnmount(() => {
 
   .spinner-container {
     text-align: center;
-    
+
     .ant-spinner {
       position: relative;
       margin: 0 auto 20px;
@@ -222,4 +226,4 @@ onBeforeUnmount(() => {
     background: rgba(0, 0, 0, 0.9);
   }
 }
-</style> 
+</style>

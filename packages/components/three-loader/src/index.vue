@@ -1,6 +1,6 @@
 <template>
   <div class="three-container">
-    <LoadingSpinner 
+    <LoadingSpinner
       v-if="loading"
       :progress="loadingProgress"
       :auto-change-text="true"
@@ -8,11 +8,8 @@
     />
 
     <div ref="threeContainer" class="canvas-container"></div>
-    
-    <ModelControls 
-      :model-controls="modelControls"
-      class="model-controls"
-    />
+
+    <ModelControls :model-controls="modelControls" class="model-controls" />
   </div>
 </template>
 
@@ -34,12 +31,8 @@ import { SCENE_EVENTS_KEY, type SceneEvents } from './config/eventKeys'
 // 场景管理
 const {
   threeContainer,
-  scene,
   loading,
   loadingProgress,
-  mixer,
-  animations,
-  model,
   modelControls,
   initScene,
   resetView,
@@ -59,9 +52,8 @@ const {
   updateFloorOpacity,
 } = useThreeScene({
   lights: defaultLightConfig,
-  helper: defaultHelperConfig
+  helper: defaultHelperConfig,
 })
-
 
 /**
  * 初始化场景和模型
@@ -137,7 +129,7 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  
+
   .canvas-container {
     width: 100%;
     height: 100%;
@@ -149,7 +141,7 @@ onMounted(() => {
       height: 100% !important;
     }
   }
-  
+
   .model-controls {
     position: absolute;
     top: 0;
@@ -166,4 +158,4 @@ onMounted(() => {
     background-color: #1a1a1a;
   }
 }
-</style> 
+</style>

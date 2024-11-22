@@ -15,7 +15,7 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
     minPolarAngle = 0,
     maxPolarAngle = Math.PI,
     minDistance = 1,
-    maxDistance = 1000
+    maxDistance = 1000,
   } = options
 
   const controls = shallowRef<OrbitControls | null>(null)
@@ -41,7 +41,7 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
         minPolarAngle,
         maxPolarAngle,
         minDistance,
-        maxDistance
+        maxDistance,
       })
 
       controls.value = newControls
@@ -75,6 +75,6 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
     controls,
     createControls,
     updateControls,
-    dispose
+    dispose,
   }
-} 
+}

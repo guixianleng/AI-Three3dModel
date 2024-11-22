@@ -1,11 +1,10 @@
 import { ref, shallowRef } from 'vue'
 import * as THREE from 'three'
-import { 
-  loadModel, 
-  ModelFileType, 
-  type LoaderOptions, 
-  type TextureOptions, 
-  getModelBounds 
+import {
+  loadModel,
+  type LoaderOptions,
+  type TextureOptions,
+  getModelBounds,
 } from '../utils/modelUtils'
 import type { ModelLoadResult } from '../types/animation'
 import type { IPosition } from '../types/positions'
@@ -39,17 +38,17 @@ export function useThreeModel(options: LoaderOptions = {}) {
 
       // 加载模型
       const object = await loadModel(url, scene, options)
-      
+
       // 确保模型正确放置在地板上
       const bounds = getModelBounds(object)
       if (bounds.minY < 0) {
         // 如果模型最低点低于0，将整个模型向上移动
         object.position.y -= bounds.minY
       }
-      
+
       // 创建动画混合器
       const newMixer = new THREE.AnimationMixer(object)
-      
+
       // 如果是 FBX 模型，动画在 object.animations 中
       let newAnimations: THREE.AnimationAction[] = []
       if ('animations' in object && Array.isArray(object.animations)) {
@@ -64,13 +63,13 @@ export function useThreeModel(options: LoaderOptions = {}) {
       loading.value = false
       console.log('模型加载完成', {
         animations: newAnimations.length,
-        hasMixer: !!newMixer
+        hasMixer: !!newMixer,
       })
 
       return {
         model: object as THREE.Group,
         mixer: newMixer,
-        animations: newAnimations
+        animations: newAnimations,
       }
     } catch (error) {
       loading.value = false
@@ -122,7 +121,7 @@ export function useThreeModel(options: LoaderOptions = {}) {
    */
   const dispose = () => {
     if (model.value) {
-      model.value.traverse((child) => {
+      model.value.traverse(child => {
         if (child instanceof THREE.Mesh) {
           if (child.geometry) {
             child.geometry.dispose()
@@ -160,6 +159,6 @@ export function useThreeModel(options: LoaderOptions = {}) {
     updateScale,
     updateRotation,
     updateMaterials,
-    dispose
+    dispose,
   }
-} 
+}

@@ -20,7 +20,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
     camera: cameraOptions = defaultModelConfig.camera,
     lights: lightConfig = defaultModelConfig.lights,
     controls: controlsOptions = defaultModelConfig.controls,
-    helper: helperOptions = defaultModelConfig.helperConfig
+    helper: helperOptions = defaultModelConfig.helperConfig,
   } = options
 
   // 场景相关引用
@@ -30,22 +30,21 @@ export function useThreeScene(options: ISceneOptions = {}) {
 
   // 引入相关的 hooks
   const lightUtils = useThreeLights()
-  const { addLightsToScene, removeLightsFromScene, updateLight } = lightUtils
+  const { addLightsToScene, updateLight } = lightUtils
   provide(LIGHTS_KEY, lightUtils)
 
-  const { 
-    camera, 
+  const {
+    camera,
     createCamera,
     setCamera,
     updateAspect,
-    dispose: disposeCamera 
+    dispose: disposeCamera,
   } = useThreeCamera(cameraOptions)
 
-  const { 
+  const {
     controls,
     createControls,
-    updateControls,
-    dispose: disposeControls
+    dispose: disposeControls,
   } = useThreeControls(camera.value, controlsOptions)
 
   const {
@@ -59,7 +58,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updateStats,
     updateFloorColor,
     updateFloorOpacity,
-    dispose: disposeHelper
+    dispose: disposeHelper,
   } = useThreeHelper(helperOptions)
 
   // 加载模型管理
@@ -74,17 +73,12 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updatePosition,
     updateScale,
     updateRotation,
-    updateMaterials
+    updateMaterials,
   } = useThreeModel()
 
   // 动画管理
-  const {
-    modelControls,
-    startAnimation,
-    pauseAnimation,
-    resetAnimation,
-    updateAnimation
-  } = useModelAnimation()
+  const { modelControls, startAnimation, pauseAnimation, resetAnimation, updateAnimation } =
+    useModelAnimation()
 
   // 渲染循环ID
   let animationFrameId: number | null = null
@@ -94,13 +88,13 @@ export function useThreeScene(options: ISceneOptions = {}) {
    */
   const createRenderer = (container: HTMLElement) => {
     try {
-      const newRenderer = new THREE.WebGLRenderer({ 
-        antialias: true, 
+      const newRenderer = new THREE.WebGLRenderer({
+        antialias: true,
         alpha: true,
-        powerPreference: 'high-performance'
+        powerPreference: 'high-performance',
       })
       newRenderer.setSize(container.clientWidth, container.clientHeight)
-      newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))  // 限制像素比以优化性能
+      newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // 限制像素比以优化性能
       newRenderer.shadowMap.enabled = true
       newRenderer.shadowMap.type = THREE.PCFSoftShadowMap
       newRenderer.outputEncoding = THREE.sRGBEncoding
@@ -116,7 +110,9 @@ export function useThreeScene(options: ISceneOptions = {}) {
   /**
    * 初始化场景
    */
-  const initScene = async (modelUrl: string = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx',) => {
+  const initScene = async (
+    modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
+  ) => {
     try {
       console.log('开始初始化场景...')
       if (!threeContainer.value) {
@@ -137,7 +133,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
       const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
       const newCamera = createCamera(aspect)
       if (!newCamera) throw new Error('相机创建失败')
-      
+
       // 设置相机初始位置
       const { initial: initialPos, target } = defaultModelConfig.camera.position
       newCamera.position.set(initialPos.x, initialPos.y, initialPos.z)
@@ -150,7 +146,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
       // 创建控制器并配置
       const newControls = createControls(renderer.domElement)
       if (!newControls) throw new Error('控制器创建失败')
-      
+
       // 应用控制器配置
       Object.assign(newControls, controlsOptions)
       newControls.update()
@@ -183,17 +179,17 @@ export function useThreeScene(options: ISceneOptions = {}) {
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate)
-      
+
       if (controls.value) {
         controls.value.update()
       }
-      
+
       updateAnimation(mixer.value)
-      
+
       if (scene.value && camera.value) {
         renderer.render(scene.value, camera.value)
       }
-      
+
       updateStats()
     }
 
@@ -293,24 +289,27 @@ export function useThreeScene(options: ISceneOptions = {}) {
       } else {
         // 加载纹理
         const textureLoader = new THREE.TextureLoader()
-        
+
         // 确保使用完整的URL，避免缓存问题
         const imageUrl = new URL(value).toString()
-        
+
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
           textureLoader.load(
             imageUrl,
-            (loadedTexture) => {
+            loadedTexture => {
               loadedTexture.colorSpace = THREE.SRGBColorSpace
               loadedTexture.minFilter = THREE.LinearFilter
               loadedTexture.magFilter = THREE.LinearFilter
               loadedTexture.needsUpdate = true
               resolve(loadedTexture)
             },
-            (progress) => {
-              console.log('背景纹理加载进度:', (progress.loaded / progress.total * 100).toFixed(1) + '%')
+            progress => {
+              console.log(
+                '背景纹理加载进度:',
+                ((progress.loaded / progress.total) * 100).toFixed(1) + '%'
+              )
             },
-            (error) => {
+            error => {
               console.error('背景纹理加载失败:', error)
               reject(error)
             }
@@ -326,11 +325,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
         scene.value.background = texture
 
         // 强制渲染器更新
-        renderer.setSize(
-          renderer.domElement.clientWidth,
-          renderer.domElement.clientHeight,
-          false
-        )
+        renderer.setSize(renderer.domElement.clientWidth, renderer.domElement.clientHeight, false)
       }
 
       // 强制重新渲染一帧
@@ -375,6 +370,6 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updateFloorColor,
     updateBackground,
     updateFloorOpacity,
-    updateLight
+    updateLight,
   }
-} 
+}

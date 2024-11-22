@@ -14,7 +14,7 @@ export enum ModelFileType {
   GLB = 'GLB',
   OBJ = 'OBJ',
   STL = 'STL',
-  UNKNOWN = 'UNKNOWN'
+  UNKNOWN = 'UNKNOWN',
 }
 
 export interface TextureOptions {
@@ -67,14 +67,17 @@ export function modelFileType(fileName: string): ModelFileType {
  * @param options - 加载器配置选项
  * @returns 对应的 Three.js Loader 实例
  */
-export function getLoaderByFileType(fileType: ModelFileType, options: LoaderOptions = {}): THREE.Loader | null {
-  const { useDraco = false, dracoPath = '/draco/', textureCompression = false } = options
+export function getLoaderByFileType(
+  fileType: ModelFileType,
+  options: LoaderOptions = {}
+): THREE.Loader | null {
+  const { useDraco = false, dracoPath = '/draco/' } = options
 
   try {
     switch (fileType) {
       case ModelFileType.FBX:
         return new FBXLoader()
-      
+
       case ModelFileType.GLTF:
       case ModelFileType.GLB: {
         const loader = new GLTFLoader()
@@ -85,13 +88,13 @@ export function getLoaderByFileType(fileType: ModelFileType, options: LoaderOpti
         }
         return loader
       }
-      
+
       case ModelFileType.OBJ:
         return new OBJLoader()
-      
+
       case ModelFileType.STL:
         return new STLLoader()
-      
+
       default:
         console.warn(`不支持的文件类型: ${fileType}`)
         return null
@@ -111,16 +114,16 @@ export function getModelBounds(object: THREE.Object3D) {
   const box = new THREE.Box3().setFromObject(object)
   const size = new THREE.Vector3()
   const center = new THREE.Vector3()
-  
+
   box.getSize(size)
   box.getCenter(center)
-  
+
   return {
     box,
     size,
     center,
-    minY: box.min.y,  // 模型最低点
-    maxY: box.max.y   // 模型最高点
+    minY: box.min.y, // 模型最低点
+    maxY: box.max.y, // 模型最高点
   }
 }
 
@@ -130,21 +133,21 @@ export function getModelBounds(object: THREE.Object3D) {
 function computeModelTransform(object: THREE.Object3D) {
   const bounds = getModelBounds(object)
   const { size, center } = bounds
-  
+
   // 获取模型的最大尺寸
   const maxSize = Math.max(size.x, size.y, size.z)
-  
+
   // 计算合适的缩放比例
   const targetSize = 100
   const scale = targetSize / maxSize
 
   // 计算位置，使模型底部正好在地面上
   const position = new THREE.Vector3(
-    -center.x * scale,           // 水平居中
-    -bounds.minY * scale,        // 将模型底部对齐到 y=0
-    -center.z * scale            // 深度居中
+    -center.x * scale, // 水平居中
+    -bounds.minY * scale, // 将模型底部对齐到 y=0
+    -center.z * scale // 深度居中
   )
-  
+
   return { position, scale }
 }
 
@@ -160,7 +163,7 @@ function processModelMaterials(object: any): THREE.Group {
     if (object.animations?.length > 0) {
       model.animations = object.animations
     }
-  } 
+  }
   // 处理 FBX 或其他返回 Group 的模型
   else if (object instanceof THREE.Group) {
     model = object
@@ -172,10 +175,10 @@ function processModelMaterials(object: any): THREE.Group {
       color: 0xaaaaaa,
       metalness: 0.5,
       roughness: 0.5,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     })
     const mesh = new THREE.Mesh(object, material)
-    
+
     // 优化几何体
     if (!object.attributes.normal) {
       object.computeVertexNormals()
@@ -233,7 +236,7 @@ export async function loadModel(
   return new Promise((resolve, reject) => {
     loader.load(
       url,
-      (object) => {
+      object => {
         try {
           const model = processModelMaterials(object)
           scene.add(model)
@@ -244,10 +247,10 @@ export async function loadModel(
         }
       },
       options.onProgress,
-      (error) => {
+      error => {
         console.error('加载模型失败:', error)
         reject(error)
       }
     )
   })
-} 
+}

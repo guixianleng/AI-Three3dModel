@@ -10,4 +10,4 @@ export interface ModelLoadResult {
   mixer: THREE.AnimationMixer
   /** 动画动作数组 */
   animations: THREE.AnimationAction[]
-} 
+}
