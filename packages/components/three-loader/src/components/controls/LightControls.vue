@@ -294,42 +294,42 @@ const updatePointLightPosition = () => {
 </script>
 
 <style lang="scss" scoped>
-.control-sections {
-  .section-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    font-weight: bold;
-    font-size: 15px;
-    color: var(--el-text-color-primary);
+@use './style.scss';
 
-    .switch-inline {
-      margin-left: auto;
-    }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--el-text-color-primary);
+
+  .switch-inline {
+    margin-left: auto;
   }
+}
 
-  .control-item {
-    border-radius: 6px;
-    padding-bottom: 20px;
+.control-item {
+  border-radius: 6px;
+  padding-bottom: 20px;
 
-    .control-content {
-      .control-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 16px;
-        font-size: 14px;
-        color: var(--el-text-color-regular);
+  .control-content {
+    .control-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 14px;
+      color: var(--el-text-color-regular);
 
-        &:last-child {
-          margin-bottom: 0;
-        }
+      &:last-child {
+        margin-bottom: 0;
+      }
 
-        .el-slider,
-        .el-select {
-          width: 140px;
-        }
+      // 调整滑块和选择器的宽度
+      .el-slider {
+        width: 140px;
       }
     }
   }
