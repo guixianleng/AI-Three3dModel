@@ -37,7 +37,15 @@ export function useThreeModel(options: LoaderOptions = {}) {
       loadingProgress.value = 0
 
       // 加载模型
-      const object = await loadModel(url, scene, options)
+      const object = await loadModel(url, scene, {
+        ...options,
+        onProgress: (event: ProgressEvent) => {
+          if (event.lengthComputable) {
+            loadingProgress.value = (event.loaded / event.total) * 100
+            console.log('加载进度:', loadingProgress.value.toFixed(1) + '%')
+          }
+        }
+      })
 
       // 确保模型正确放置在地板上
       const bounds = getModelBounds(object)
