@@ -328,7 +328,8 @@ const updatePointLightPosition = () => {
       }
 
       // 调整滑块和选择器的宽度
-      .el-slider {
+      .el-slider,
+      .el-select {
         width: 140px;
       }
     }

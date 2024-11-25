@@ -40,18 +40,18 @@ export interface StatsConfig {
 export const defaultHelperConfig: IHelperOptions = {
   grid: {
     show: false,
-    size: 500,
+    size: 1000,
     divisions: 100,
     color: '#888',
   },
   axes: {
     show: false,
-    size: 100,
+    size: 400,
   },
   floor: {
     show: true,
     color: '#666',
-    opacity: 0.2,
+    opacity: 0.5,
   },
   stats: {
     show: true,

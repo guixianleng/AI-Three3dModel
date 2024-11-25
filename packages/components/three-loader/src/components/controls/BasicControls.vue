@@ -172,9 +172,13 @@ const floorOptions = reactive({
 
 // 处理背景颜色变化
 const handleBackgroundColorChange = (color: string) => {
+  // 从 rgba 字符串中提取透明度值
+  const opacity = parseFloat(color.match(/rgba?\(\d+,\s*\d+,\s*\d+(?:,\s*([\d.]+))?\)/)?.[1] || '1')
+
   sceneEvents?.updateBackground({
     type: BackgroundType.Color,
     value: color,
+    opacity,
   })
 }
 
@@ -306,7 +310,6 @@ onMounted(async () => {
   .render-group {
     position: relative;
     margin-bottom: 16px;
-    padding: 12px 16px;
     background: var(--el-fill-color-light);
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -347,7 +350,6 @@ onMounted(async () => {
         }
 
         .opacity-value {
-          min-width: 36px;
           padding: 2px 6px;
           text-align: center;
           background: var(--el-fill-color-darker);

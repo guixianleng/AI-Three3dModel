@@ -21,7 +21,7 @@
         <div class="panel-header">
           <div class="title">
             <span>模型控制</span>
-            <el-tag size="small" type="info">FBX模型</el-tag>
+            <el-tag size="small" type="info">3D模型</el-tag>
           </div>
           <div class="actions">
             <el-button-group>

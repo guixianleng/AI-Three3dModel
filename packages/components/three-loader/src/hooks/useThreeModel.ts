@@ -44,7 +44,7 @@ export function useThreeModel(options: LoaderOptions = {}) {
             loadingProgress.value = (event.loaded / event.total) * 100
             console.log('加载进度:', loadingProgress.value.toFixed(1) + '%')
           }
-        }
+        },
       })
 
       // 确保模型正确放置在地板上

@@ -91,6 +91,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
       const newRenderer = new THREE.WebGLRenderer({
         antialias: true,
         alpha: true,
+        premultipliedAlpha: false,
         powerPreference: 'high-performance',
       })
       newRenderer.setSize(container.clientWidth, container.clientHeight)
@@ -99,6 +100,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
       newRenderer.shadowMap.type = THREE.PCFSoftShadowMap
       newRenderer.outputEncoding = THREE.sRGBEncoding
       newRenderer.toneMapping = THREE.ACESFilmicToneMapping
+      newRenderer.setClearAlpha(0)
       container.appendChild(newRenderer.domElement)
       return newRenderer
     } catch (error) {
@@ -121,13 +123,20 @@ export function useThreeScene(options: ISceneOptions = {}) {
 
       // 创建场景
       scene.value = new THREE.Scene()
-      // 设置默认背景颜色
-      scene.value.background = new THREE.Color(defaultModelConfig.background.color)
 
-      // 创建渲染器
-      const newRenderer = createRenderer(threeContainer.value)
-      if (!newRenderer) throw new Error('渲染器创建失败')
-      renderer = newRenderer
+      // 设置 RGBA 背景色
+      const backgroundColor = new THREE.Color()
+      backgroundColor.setStyle(defaultModelConfig.background.color)
+
+      // 不设置场景背景，而是使用渲染器的 clearColor
+      scene.value.background = null
+
+      // 确保渲染器支持透明背景
+      renderer = createRenderer(threeContainer.value)
+      if (!renderer) throw new Error('渲染器创建失败')
+
+      // 设置背景色和透明度
+      renderer.setClearColor(backgroundColor, defaultModelConfig.background.opacity)
 
       // 创建相机
       const aspect = threeContainer.value.clientWidth / threeContainer.value.clientHeight
@@ -280,12 +289,34 @@ export function useThreeScene(options: ISceneOptions = {}) {
   /**
    * 更新场景背景
    */
-  const updateBackground = async ({ type, value }: { type: BackgroundType; value: string }) => {
+  const updateBackground = async ({
+    type,
+    value,
+    opacity,
+  }: {
+    type: BackgroundType
+    value: string
+    opacity?: number
+  }) => {
     if (!scene.value) return
 
     try {
       if (type === BackgroundType.Color) {
-        scene.value.background = new THREE.Color(value)
+        const color = new THREE.Color()
+        color.setStyle(value)
+
+        // 设置场景背景为 null，这样才能看到透明效果
+        scene.value.background = null
+
+        // 使用 setClearColor 来设置背景色和透明度
+        const finalOpacity = opacity ?? defaultModelConfig.background.opacity
+        renderer.setClearColor(color, finalOpacity)
+
+        console.log('背景更新:', {
+          color: value,
+          opacity: finalOpacity,
+          actualAlpha: renderer.getClearAlpha(),
+        })
       } else {
         // 加载纹理
         const textureLoader = new THREE.TextureLoader()

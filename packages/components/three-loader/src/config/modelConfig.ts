@@ -21,8 +21,10 @@ export enum BackgroundType {
 interface BackgroundConfig {
   /** 背景类型 */
   type: BackgroundType
-  /** 背景颜色 */
+  /** 背景颜色 (支持 rgba) */
   color: string
+  /** 背景透明度 */
+  opacity: number
   /** 背景图片URL */
   image: string
 }
@@ -58,7 +60,8 @@ export const defaultModelConfig: ModelConfig = {
   rotation: { x: 0, y: 0, z: 0 },
   background: {
     type: BackgroundType.Color,
-    color: '#9FA4AA',
+    color: 'rgba(159, 164, 170, 0.5)',
+    opacity: 0.5,
     image: '',
   },
   lights: defaultLightConfig,
