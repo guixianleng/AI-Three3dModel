@@ -4,7 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -F @my-admin/play dev",
-    "build": "pnpm -r build",
+    "build": "pnpm -F @my-admin/play build",
+    "preview": "pnpm -F @my-admin/play preview",
+    "lib": "pnpm -r build",
     "lint": "pnpm -r lint"
   },
   "dependencies": {
