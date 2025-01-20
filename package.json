@@ -19,6 +19,7 @@
     "@types/three": "^0.170.0",
     "sass-embedded": "^1.81.0",
     "typescript": "^5.0.0",
+    "unocss": "^65.4.2",
     "vue-tsc": "^1.8.0"
   }
 }
