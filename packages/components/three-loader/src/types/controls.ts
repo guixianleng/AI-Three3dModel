@@ -1,5 +1,6 @@
 import type { SceneLightsConfig } from './lights'
 import type { IHelperOptions } from './scene'
+import type { IMaterialOptions } from './materials'
 
 /**
  * 模型控制状态接口
@@ -15,6 +16,8 @@ export interface IModelControls {
   lights: SceneLightsConfig
   /** 辅助工具配置 */
   helperConfig: IHelperOptions
+  /** 材质列表 */
+  materials: IMaterialOptions[]
 }
 
 /**

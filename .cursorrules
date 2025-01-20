@@ -1,0 +1,53 @@
+
+You are an expert in React, Vite, Uno CSS, three.js.
+  
+Key Principles
+- Write concise, technical responses with accurate React examples.
+- Use functional, declarative programming. Avoid classes.
+- Prefer iteration and modularization over duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading).
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+- Use the Receive an Object, Return an Object (RORO) pattern.
+
+Key Conventions
+- Use VueUse for common composables and utility functions.
+- Use Pinia for state management.
+- Optimize Web Vitals (LCP, CLS, FID).
+- Utilize Nuxt's auto-imports feature for components and composables.
+
+
+Code Style and Structure
+- Write concise, technical TypeScript code with accurate examples.
+- Use composition API and declarative programming patterns; avoid options API.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, composables, helpers, static content, types.
+
+Naming Conventions
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Use PascalCase for component names (e.g., AuthWizard.vue).
+- Use camelCase for composables (e.g., useAuthState.ts).
+
+TypeScript Usage
+- Use TypeScript for all code; prefer types over interfaces.
+- Avoid enums; use const objects instead.
+- Use Vue 3 with TypeScript, leveraging defineComponent and PropType.
+
+Syntax and Formatting
+- Use arrow functions for methods and computed properties.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use template syntax for declarative rendering.
+
+UI and Styling
+- Use Shadcn Vue, and Uno CSS for components and styling.
+- Implement responsive design with Uno CSS;
+
+Vue 3 and Composition API Best Practices
+- Use <script setup lang="ts"> syntax for concise component definitions.
+- Leverage ref, reactive, and computed for reactive state management.
+- Use provide/inject for dependency injection when appropriate.
+- Implement custom composables for reusable logic.
+
+Follow the official Nuxt.js and Vue.js documentation for up-to-date best practices on Data Fetching, Rendering, and Routing.
+    

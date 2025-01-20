@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader'
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
+import { ColladaLoader } from 'three/examples/jsm/loaders/ColladaLoader'
 
 /**
  * 支持的3D模型文件类型
@@ -14,6 +15,7 @@ export enum ModelFileType {
   GLB = 'GLB',
   OBJ = 'OBJ',
   STL = 'STL',
+  DAE = 'DAE',
   UNKNOWN = 'UNKNOWN',
 }
 
@@ -55,6 +57,8 @@ export function modelFileType(fileName: string): ModelFileType {
       return ModelFileType.OBJ
     case 'stl':
       return ModelFileType.STL
+    case 'dae':
+      return ModelFileType.DAE
     default:
       console.warn(`无法识别的文件扩展名: ${extension}`)
       return ModelFileType.UNKNOWN
@@ -94,6 +98,9 @@ export function getLoaderByFileType(
 
       case ModelFileType.STL:
         return new STLLoader()
+
+      case ModelFileType.DAE:
+        return new ColladaLoader()
 
       default:
         console.warn(`不支持的文件类型: ${fileType}`)
@@ -141,7 +148,7 @@ function computeModelTransform(object: THREE.Object3D) {
   const targetSize = 100
   const scale = targetSize / maxSize
 
-  // 计算位置，使模型底部正好在地面上
+  // 计算位置，使模型正好在地面上
   const position = new THREE.Vector3(
     -center.x * scale, // 水平居中
     -bounds.minY * scale, // 将模型底部对齐到 y=0
@@ -156,15 +163,50 @@ function computeModelTransform(object: THREE.Object3D) {
  */
 function processModelMaterials(object: any): THREE.Group {
   let model: THREE.Group
+  
+  // 通过 object 的特征判断是否是 DAE 模型
+  const isDaeModel = Boolean(
+    object.kinematics || // DAE 模型特有的运动学属性
+    object.library?.animations || // DAE 模型特有的动画库
+    object.dae // 某些版本的 ColladaLoader 会添加这个标记
+  )
 
-  // 处理 GLTF/GLB 模型
+  // 处理 GLTF/GLB/DAE 模型
   if (object.scene && object.scene instanceof THREE.Group) {
     model = object.scene
     if (object.animations?.length > 0) {
       model.animations = object.animations
     }
+
+    // 处理材质
+    model.traverse((child: THREE.Object3D) => {
+      if (child instanceof THREE.Mesh) {
+        if (isDaeModel) {
+          // DAE 模型特定的材质处理
+          child.material.flatShading = true
+          child.material.needsUpdate = true
+        }
+        // 处理材质数组的情况（一个模型可能有多个材质）
+        else if (Array.isArray(child.material)) {
+          child.material.forEach(mat => {
+            // MeshPhongMaterial 是 Collada 模型常用的材质类型
+            if (mat instanceof THREE.MeshPhongMaterial) {
+              // 设置光泽度，值越小越哑光，值越大越光亮
+              mat.shininess = 30
+              // 设置高光颜色，控制反射光的颜色和强度
+              mat.specular.setRGB(0.2, 0.2, 0.2)
+            }
+          })
+        } 
+        // 处理单个材质的情况
+        else if (child.material instanceof THREE.MeshPhongMaterial) {
+          child.material.shininess = 30
+          child.material.specular.setRGB(0.2, 0.2, 0.2)
+        }
+      }
+    })
   }
-  // 处理 FBX 或其他返回 Group 的模型
+  // 处理其他类型模型
   else if (object instanceof THREE.Group) {
     model = object
   }

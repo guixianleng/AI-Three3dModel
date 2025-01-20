@@ -13,9 +13,9 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
     autoRotate = false,
     autoRotateSpeed = 2.0,
     minPolarAngle = 0,
-    maxPolarAngle = Math.PI,
-    minDistance = 1,
-    maxDistance = 1000,
+    maxPolarAngle = Math.PI / 2,
+    minDistance = 0,
+    maxDistance = 2000,
   } = options
 
   const controls = shallowRef<OrbitControls | null>(null)
@@ -53,6 +53,22 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
   }
 
   /**
+   * 更新控制器配置
+   */
+  const updateControlsOptions = (newOptions: Partial<IControlsOptions>) => {
+    if (!controls.value) {
+      console.warn('控制器未初始化，无法更新配置')
+      return
+    }
+
+    try {
+      Object.assign(controls.value, newOptions)
+    } catch (error) {
+      console.error('更新控制器配置失败:', error)
+    }
+  }
+
+  /**
    * 更新控制器
    */
   const updateControls = () => {
@@ -75,6 +91,7 @@ export function useThreeControls(camera: THREE.Camera | undefined, options: ICon
     controls,
     createControls,
     updateControls,
+    updateControlsOptions,
     dispose,
   }
 }

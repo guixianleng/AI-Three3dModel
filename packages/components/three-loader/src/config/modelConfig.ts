@@ -67,14 +67,14 @@ export const defaultModelConfig: ModelConfig = {
   lights: defaultLightConfig,
   helperConfig: defaultHelperConfig,
   controls: {
-    enableDamping: true, // 启用阻尼效果
-    dampingFactor: 0.05, // 阻尼系数
-    enableZoom: true, // 启用缩放
-    minDistance: 100, // 最小缩放距离
-    maxDistance: 1000, // 最大缩放距离
-    enablePan: true, // 启用平移
-    autoRotate: false, // 自动旋转
-    autoRotateSpeed: 2.0, // 自动旋转速度
+    enableDamping: true,
+    dampingFactor: 0.05,
+    autoRotate: false,
+    autoRotateSpeed: 2.0,
+    minPolarAngle: 0,
+    maxPolarAngle: 90,
+    minDistance: 0,
+    maxDistance: 4000,
   },
   camera: defaultCameraConfig,
 }

@@ -13,7 +13,7 @@ export default defineConfig(({ command }) => {
       }
     },
     server: {
-      port: 9527
+      port: 9533
     },
     optimizeDeps: {
       include: [

@@ -43,7 +43,7 @@ export function useThreeHelper(options: IHelperOptions = defaultModelConfig.help
 
       // 确保地板位于 y=0 平面，并且朝上
       floorMesh.rotation.x = -Math.PI / 2
-      floorMesh.position.y = 0
+      // floorMesh.position.y = 0
       floorMesh.receiveShadow = true
       floorMesh.visible = showFloor
       // 添加名称以便后续查找

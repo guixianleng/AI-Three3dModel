@@ -1,21 +1,5 @@
 <template>
   <div class="model-controls-wrapper">
-    <!-- 隐藏按钮 -->
-    <div class="hide-button" :class="{ 'panel-hidden': !visible }">
-      <el-button
-        circle
-        type="primary"
-        size="small"
-        :title="visible ? '隐藏配置面板' : '显示配置面板'"
-        @click="toggleVisible"
-      >
-        <el-icon>
-          <Close v-if="visible" />
-          <Setting v-else />
-        </el-icon>
-      </el-button>
-    </div>
-
     <el-card v-show="visible" class="model-controls">
       <template #header>
         <div class="panel-header">
@@ -52,6 +36,10 @@
               <el-icon><Sunny /></el-icon>
               光源设置
             </el-radio-button>
+            <el-radio-button value="materials">
+              <el-icon><Brush /></el-icon>
+              材质设置
+            </el-radio-button>
           </el-radio-group>
         </div>
 
@@ -64,6 +52,12 @@
         <RenderControls v-show="activeModule === 'render'" />
 
         <LightControls v-show="activeModule === 'lights'" :lights="modelControls.lights" />
+
+        <MaterialControls
+          v-show="activeModule === 'materials'"
+          :material-list="modelControls.materials"
+          @update-material="handleMaterialUpdate"
+        />
       </div>
     </el-card>
   </div>
@@ -79,6 +73,7 @@ import {
   Camera,
   Setting,
   Close,
+  Brush,
 } from '@element-plus/icons-vue'
 import type { IModelControls } from '../types/controls'
 import type { SceneEvents } from '../config/eventKeys'
@@ -86,6 +81,7 @@ import { SCENE_EVENTS_KEY } from '../config/eventKeys'
 import BasicControls from './controls/BasicControls.vue'
 import RenderControls from './controls/RenderControls.vue'
 import LightControls from './controls/LightControls.vue'
+import MaterialControls from './controls/MaterialControls.vue'
 
 defineProps<{
   modelControls: IModelControls
@@ -98,6 +94,11 @@ const visible = ref(true)
 const toggleVisible = () => {
   visible.value = !visible.value
 }
+
+// 处理材质更新
+const handleMaterialUpdate = (name: string, property: string, value: any) => {
+  sceneEvents?.updateMaterial({ name, property, value })
+}
 </script>
 
 <style lang="scss" scoped>
@@ -106,46 +107,9 @@ const toggleVisible = () => {
   height: 100%;
   width: 100%;
 
-  .hide-button {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: -32px;
-    z-index: 101;
-    transition: all 0.5s ease;
-
-    &.panel-hidden {
-      position: absolute;
-      left: auto;
-      right: 0;
-    }
-
-    .el-button {
-      width: 32px;
-      height: 32px;
-      padding: 0;
-      border: none;
-      border-radius: 4px 0 0 4px;
-      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
-      background-color: var(--el-color-primary);
-      color: #fff;
-
-      &:hover {
-        transform: translateX(-4px);
-      }
-
-      .el-icon {
-        font-size: 16px;
-      }
-    }
-  }
-
   .model-controls {
     width: 100%;
     height: 100%;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 
     .panel-header {
       display: flex;
@@ -166,11 +130,6 @@ const toggleVisible = () => {
             .el-icon {
               margin-right: 0;
             }
-
-            &:hover {
-              background-color: var(--el-color-primary-light-7);
-              color: var(--el-color-primary);
-            }
           }
         }
       }
@@ -180,13 +139,7 @@ const toggleVisible = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .control-content {
-      display: flex;
-      flex-direction: column;
-      height: calc(100% - 20px);
-      gap: 12px;
+      margin-bottom: 16px;
     }
   }
 }

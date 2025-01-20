@@ -9,7 +9,11 @@
 
     <div ref="threeContainer" class="canvas-container"></div>
 
-    <ModelControls :model-controls="modelControls" class="model-controls" />
+    <ModelControls 
+      :model-controls="modelControls" 
+      :update-materials="updateMaterials"
+      class="model-controls" 
+    />
   </div>
 </template>
 
@@ -50,6 +54,8 @@ const {
   updateBackground,
   updateLight,
   updateFloorOpacity,
+  updateControlsOptions,
+  updateMaterials,
 } = useThreeScene({
   lights: defaultLightConfig,
   helper: defaultHelperConfig,
@@ -60,7 +66,7 @@ const {
  */
 const initModel = async () => {
   try {
-    await initScene()
+    await initScene('/glb-9.glb')
   } catch (error) {
     console.error('初始化失败:', error)
   }
@@ -116,6 +122,48 @@ provide<SceneEvents>(SCENE_EVENTS_KEY, {
   updateModelPosition: updatePosition,
   updateModelRotation: updateRotation,
   updateFloorOpacity,
+  updateControlsOptions,
+  updateMaterial: (options) => {
+    try {
+      const { name, property, value } = options
+      
+      // 如果是更新所有材质
+      if (name === 'all') {
+        modelControls.materials.forEach(mat => {
+          mat[property] = value
+          updateMaterials({
+            name: mat.name,
+            property,
+            value
+          })
+        })
+        return
+      }
+
+      // 更新单个材质
+      const material = modelControls.materials.find(m => m.name === name)
+      if (material) {
+        material[property] = value
+        updateMaterials(options)
+      }
+    } catch (error) {
+      console.error('更新材质失败:', error)
+    }
+  },
+  convertMaterial: (materialName: string, type: MaterialType) => {
+    try {
+      // 更新所有材质的类型
+      modelControls.materials.forEach(material => {
+        updateMaterials({
+          name: material.name,
+          property: 'type',
+          value: type
+        })
+      })
+    } catch (error) {
+      console.error('转换材质失败:', error)
+    }
+  },
 })
 
 // 初始化
@@ -129,9 +177,11 @@ onMounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
+  display: flex;
+  overflow: hidden;
 
   .canvas-container {
-    width: 100%;
+    flex: 2;
     height: 100%;
     position: relative;
     background-color: #f0f2f5;
@@ -143,19 +193,8 @@ onMounted(() => {
   }
 
   .model-controls {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 320px;
-    z-index: 99;
-  }
-}
-
-// 暗黑模式适配
-:deep(html.dark) {
-  .canvas-container {
-    background-color: #1a1a1a;
+    flex-basis: 400px;
+    flex-shrink: 0;
   }
 }
 </style>

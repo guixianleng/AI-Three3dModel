@@ -1,11 +1,12 @@
 import * as THREE from 'three'
-import { ref, shallowRef, onMounted, onBeforeUnmount, provide } from 'vue'
+import { ref, shallowRef, onMounted, onBeforeUnmount, provide, watch } from 'vue'
 import { useThreeLights } from './useThreeLights'
 import { useThreeCamera } from './useThreeCamera'
 import { useThreeControls } from './useThreeControls'
 import { useThreeHelper } from './useThreeHelper'
 import { useThreeModel } from './useThreeModel'
 import { useModelAnimation } from './useModelAnimation'
+import { useThreeMaterials } from './useThreeMaterials'
 
 import type { ISceneOptions } from '../types/scene'
 import { defaultModelConfig, BackgroundType } from '../config/modelConfig'
@@ -44,6 +45,8 @@ export function useThreeScene(options: ISceneOptions = {}) {
   const {
     controls,
     createControls,
+    updateControls,
+    updateControlsOptions: updateControlsConfig,
     dispose: disposeControls,
   } = useThreeControls(camera.value, controlsOptions)
 
@@ -73,12 +76,30 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updatePosition,
     updateScale,
     updateRotation,
-    updateMaterials,
+    updateMaterials: updateModelMaterials,
   } = useThreeModel()
+
+  // 材质管理
+  const {
+    materials,
+    materialList,
+    currentMaterial,
+    extractMaterialsFromModel,
+    updateMaterialProperty,
+    convertMaterialType,
+    selectMaterial,
+  } = useThreeMaterials()
 
   // 动画管理
   const { modelControls, startAnimation, pauseAnimation, resetAnimation, updateAnimation } =
     useModelAnimation()
+
+  // 更新模型控制状态中的材质列表
+  watch(materialList, (newList) => {
+    if (modelControls) {
+      modelControls.materials = newList
+    }
+  })
 
   // 渲染循环ID
   let animationFrameId: number | null = null
@@ -97,10 +118,10 @@ export function useThreeScene(options: ISceneOptions = {}) {
       newRenderer.setSize(container.clientWidth, container.clientHeight)
       newRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)) // 限制像素比以优化性能
       newRenderer.shadowMap.enabled = true
-      newRenderer.shadowMap.type = THREE.PCFSoftShadowMap
-      newRenderer.outputEncoding = THREE.sRGBEncoding
-      newRenderer.toneMapping = THREE.ACESFilmicToneMapping
-      newRenderer.setClearAlpha(0)
+      // newRenderer.shadowMap.type = THREE.PCFSoftShadowMap
+      // newRenderer.outputEncoding = THREE.sRGBEncoding
+      // newRenderer.toneMapping = THREE.ACESFilmicToneMapping
+      // newRenderer.setClearAlpha(0)
       container.appendChild(newRenderer.domElement)
       return newRenderer
     } catch (error) {
@@ -113,7 +134,7 @@ export function useThreeScene(options: ISceneOptions = {}) {
    * 初始化场景
    */
   const initScene = async (
-    modelUrl = 'https://threejs.org/examples/models/fbx/Samba%20Dancing.fbx'
+    modelUrl = 'https://threejs.org/examples/models/collada/abb_irb52_7_120.dae'
   ) => {
     try {
       console.log('开始初始化场景...')
@@ -168,9 +189,21 @@ export function useThreeScene(options: ISceneOptions = {}) {
       createFloor(scene.value)
       createStats(threeContainer.value)
 
-      const { model } = await loadModel(modelUrl, scene.value)
-      scene.value.add(model)
+      // 加载模型
+      const { model: loadedModel } = await loadModel(modelUrl, scene.value)
+      if (!loadedModel) throw new Error('模型加载失败')
+
+      // 添加模型到场景
+      scene.value.add(loadedModel)
+
+      // 提取模型材质
+      console.log('正在提取模型材质...')
+      extractMaterialsFromModel(loadedModel)
+
+      // 启动渲染循环
       startRenderLoop()
+      
+      console.log('场景初始化完成')
     } catch (error) {
       stopRenderLoop()
       loading.value = false
@@ -368,6 +401,55 @@ export function useThreeScene(options: ISceneOptions = {}) {
     }
   }
 
+  /**
+   * 更新材质
+   */
+  const handleMaterialUpdate = (options: IMaterialUpdateOptions) => {
+    try {
+      const { name, property, value } = options
+      
+      // 处理材质选择
+      if (property === 'select') {
+        const material = materials.value.get(name)
+        if (material) {
+          selectMaterial(name)
+          console.log('选中材质:', name)
+          // 强制重新渲染一帧以显示高亮效果
+          if (scene.value && camera.value) {
+            renderer.render(scene.value, camera.value)
+          }
+        }
+        return
+      }
+
+      // 如果是类型变更，需要转换材质
+      if (property === 'type') {
+        convertMaterialType(name, value)
+        // 如果当前有选中的材质，重新应用高亮效果
+        if (currentMaterial.value?.name) {
+          selectMaterial(currentMaterial.value.name)
+          // 强制重新渲染一帧以显示高亮效果
+          if (scene.value && camera.value) {
+            renderer.render(scene.value, camera.value)
+          }
+        }
+      } else {
+        // 更新其他材质属性
+        updateMaterialProperty(name, property, value)
+      }
+
+      // 通知模型更新材质
+      updateModelMaterials(options)
+      
+      // 确保所有材质更新后重新渲染一帧
+      if (scene.value && camera.value) {
+        renderer.render(scene.value, camera.value)
+      }
+    } catch (error) {
+      console.error('更新材质失败:', error)
+    }
+  }
+
   // 生命周期钩子
   onMounted(() => window.addEventListener('resize', handleResize))
   onBeforeUnmount(() => dispose())
@@ -397,10 +479,11 @@ export function useThreeScene(options: ISceneOptions = {}) {
     updatePosition,
     updateScale,
     updateRotation,
-    updateMaterials,
+    updateMaterials: handleMaterialUpdate,
     updateFloorColor,
     updateBackground,
     updateFloorOpacity,
     updateLight,
+    updateControlsOptions: updateControlsConfig,
   }
 }

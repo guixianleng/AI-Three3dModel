@@ -116,12 +116,130 @@ export function useThreeModel(options: LoaderOptions = {}) {
   }
 
   /**
-   * 更新模型材质
-   * @param options - 材质处理选项
+   * 更新材质
    */
-  const updateMaterials = (options: TextureOptions = {}) => {
-    if (!model.value) return
-    processModelMaterials(model.value, options)
+  const updateMaterials = (options: IMaterialUpdateOptions) => {
+    try {
+      const { name, property, value } = options
+      
+      // 如果是更新所有材质
+      if (name === 'all') {
+        model.value?.traverse((node) => {
+          if (node instanceof THREE.Mesh) {
+            if (Array.isArray(node.material)) {
+              node.material.forEach(material => {
+                updateMaterialProperty(material, property, value)
+              })
+            } else {
+              updateMaterialProperty(node.material, property, value)
+            }
+          }
+        })
+        return
+      }
+
+      // 更新单个材质
+      model.value?.traverse((node) => {
+        if (node instanceof THREE.Mesh) {
+          if (Array.isArray(node.material)) {
+            const targetMaterial = node.material.find(m => m.name === name)
+            if (targetMaterial) {
+              updateMaterialProperty(targetMaterial, property, value)
+            }
+          } else if (node.material.name === name) {
+            updateMaterialProperty(node.material, property, value)
+          }
+        }
+      })
+    } catch (error) {
+      console.error('更新材质失败:', error)
+    }
+  }
+
+  /**
+   * 更新材质属性
+   */
+  const updateMaterialProperty = (material: THREE.Material, property: string, value: any) => {
+    try {
+      switch (property) {
+        case 'color':
+          if ('color' in material) {
+            (material as THREE.MeshStandardMaterial).color.setHex(value)
+          }
+          break
+        case 'opacity':
+          material.opacity = value
+          break
+        case 'transparent':
+          material.transparent = value
+          if (!value) {
+            material.opacity = 1
+          }
+          break
+        case 'wireframe':
+          if ('wireframe' in material) {
+            (material as THREE.MeshStandardMaterial).wireframe = value
+          }
+          break
+        case 'visible':
+          material.visible = value
+          break
+        case 'depthWrite':
+          material.depthWrite = value
+          break
+        case 'map':
+          if ('map' in material) {
+            if (value) {
+              // 创建纹理加载器
+              const textureLoader = new THREE.TextureLoader()
+              
+              // 加载纹理
+              textureLoader.load(
+                value,
+                (texture) => {
+                  // 设置纹理参数
+                  texture.colorSpace = THREE.SRGBColorSpace
+                  texture.wrapS = THREE.RepeatWrapping
+                  texture.wrapT = THREE.RepeatWrapping
+                  texture.minFilter = THREE.LinearFilter
+                  texture.magFilter = THREE.LinearFilter
+                  texture.needsUpdate = true
+
+                  // 更新材质贴图
+                  if (material instanceof THREE.Material) {
+                    if ('map' in material) {
+                      // 如果存在旧的贴图，先释放它
+                      if ((material as THREE.MeshStandardMaterial).map) {
+                        (material as THREE.MeshStandardMaterial).map.dispose()
+                      }
+                      (material as THREE.MeshStandardMaterial).map = texture
+                      material.needsUpdate = true
+                      console.log('贴图更新成功:', value)
+                    }
+                  }
+                },
+                (progress) => {
+                  console.log('贴图加载进度:', ((progress.loaded / progress.total) * 100).toFixed(1) + '%')
+                },
+                (error) => {
+                  console.error('贴图加载失败:', error)
+                }
+              )
+            } else {
+              // 如果存在旧的贴图，释放它
+              if ((material as THREE.MeshStandardMaterial).map) {
+                (material as THREE.MeshStandardMaterial).map.dispose()
+              }
+              (material as THREE.MeshStandardMaterial).map = null
+              material.needsUpdate = true
+            }
+          }
+          break
+      }
+      material.needsUpdate = true
+    } catch (error) {
+      console.error('更新材质属性失败:', error)
+    }
   }
 
   /**

@@ -68,7 +68,7 @@
           <div class="control-content render-controls">
             <div class="render-option">
               <span>动画播放</span>
-              <el-button-group>
+              <el-button-group size="small">
                 <el-button
                   :type="isPlaying ? 'primary' : ''"
                   :disabled="isPlaying"
@@ -139,12 +139,114 @@
         </div>
       </div>
     </div>
+
+    <!-- 控制器配置 -->
+    <div class="control-section">
+      <div class="section-header">
+        <el-icon><Operation /></el-icon>
+        <span>控制器设置</span>
+      </div>
+      <div class="section-content">
+        <div class="control-item">
+          <div class="control-content render-controls">
+            <div class="render-group">
+              <div class="render-option">
+                <span>启用阻尼</span>
+                <el-switch v-model="controlsOptions.enableDamping" @change="updateControlsOptions" />
+              </div>
+              <div v-if="controlsOptions.enableDamping" class="render-option">
+                <span>阻尼系数</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.dampingFactor"
+                    :min="0"
+                    :max="0.2"
+                    :step="0.01"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.dampingFactor }}</span>
+                </div>
+              </div>
+              <div class="render-option">
+                <span>自动旋转</span>
+                <el-switch v-model="controlsOptions.autoRotate" @change="updateControlsOptions" />
+              </div>
+              <div v-if="controlsOptions.autoRotate" class="render-option">
+                <span>旋转速度</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.autoRotateSpeed"
+                    :min="0"
+                    :max="10"
+                    :step="0.5"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.autoRotateSpeed }}</span>
+                </div>
+              </div>
+              <div class="render-option">
+                <span>最小极角</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.minPolarAngle"
+                    :min="0"
+                    :max="180"
+                    :step="1"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.minPolarAngle }}°</span>
+                </div>
+              </div>
+              <div class="render-option">
+                <span>最大极角</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.maxPolarAngle"
+                    :min="0"
+                    :max="180"
+                    :step="1"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.maxPolarAngle }}°</span>
+                </div>
+              </div>
+              <div class="render-option">
+                <span>最小距离</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.minDistance"
+                    :min="0"
+                    :max="1000"
+                    :step="10"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.minDistance }}</span>
+                </div>
+              </div>
+              <div class="render-option">
+                <span>最大距离</span>
+                <div class="opacity-control">
+                  <el-slider
+                    v-model="controlsOptions.maxDistance"
+                    :min="1000"
+                    :max="10000"
+                    :step="100"
+                    @change="updateControlsOptions"
+                  />
+                  <span class="value">{{ controlsOptions.maxDistance }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, inject, onMounted, reactive } from 'vue'
-import { VideoPlay, VideoPause, RefreshRight, Brush, Refresh, Grid } from '@element-plus/icons-vue'
+import { VideoPlay, VideoPause, RefreshRight, Brush, Refresh, Grid, Operation } from '@element-plus/icons-vue'
 import type { SceneEvents } from '../../config/eventKeys'
 import { SCENE_EVENTS_KEY } from '../../config/eventKeys'
 import { defaultPredefineColors } from '../../config/colorConfig'
@@ -169,6 +271,22 @@ const backgroundOptions = reactive({
 const floorOptions = reactive({
   ...defaultModelConfig.helperConfig.floor,
 })
+
+// 控制器配置
+const controlsOptions = reactive({
+  ...defaultModelConfig.controls,
+})
+
+// 更新控制器配置
+const updateControlsOptions = () => {
+  // 将角度转换为弧度
+  const options = {
+    ...controlsOptions,
+    minPolarAngle: (controlsOptions.minPolarAngle * Math.PI) / 180,
+    maxPolarAngle: (controlsOptions.maxPolarAngle * Math.PI) / 180,
+  }
+  sceneEvents?.updateControlsOptions(options)
+}
 
 // 处理背景颜色变化
 const handleBackgroundColorChange = (color: string) => {
@@ -313,10 +431,6 @@ onMounted(async () => {
     background: var(--el-fill-color-light);
     border-radius: 8px;
     transition: all 0.3s ease;
-
-    &:hover {
-      background: var(--el-fill-color);
-    }
 
     &:last-child {
       margin-bottom: 0;

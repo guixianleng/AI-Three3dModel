@@ -1,9 +1,5 @@
 <template>
-  <el-container class="h-screen">
-    <el-main class="p-0 m-0">
-      <Home />
-    </el-main>
-  </el-container>
+  <Home />
 </template>
 
 <script setup lang="ts">
